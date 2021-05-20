@@ -1,1 +1,22 @@
-<app-map></app-map>
+<div class="ui">
+  <div *ngIf="currentScenario" class="back">
+    <a mat-raised-button [routerLink]="['']" (click)="currentScenario = ''"
+      >Back</a
+    >
+  </div>
+  <div *ngIf="!currentScenario" class="docs-app-background scenarios">
+    <mat-toolbar color="primary"><span>Carto Wizard</span> </mat-toolbar>
+    <mat-nav-list>
+      <a
+        mat-list-item
+        *ngFor="let scenario of scenarioList"
+        [routerLink]="[scenario.id]"
+        (click)="currentScenario = scenario.id"
+        >{{ scenario.name }}
+      </a>
+    </mat-nav-list>
+  </div>
+</div>
+<div class="map" leaflet [leafletOptions]="options">
+  <router-outlet></router-outlet>
+</div>

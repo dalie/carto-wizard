@@ -1,0 +1,40 @@
+.ui {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-areas:
+    "top-left center top-right"
+    "center-left center center-right"
+    "bottom-left center bottom-right";
+
+  z-index: 1000;
+  pointer-events: none;
+
+  > .back {
+    a {
+      pointer-events: all;
+    }
+  }
+  > .scenarios {
+    grid-area: center;
+    border-radius: 5px;
+    box-shadow: 5px 5px 5px rgba(black, 0.5);
+    background-color: #303030;
+    pointer-events: all;
+    margin: 200px auto auto auto;
+    width: 600px;
+
+    flex-grow: 1;
+
+    mat-toolbar {
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+    }
+  }
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+}
