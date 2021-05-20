@@ -34,8 +34,12 @@ export class AppComponent implements OnInit {
 
   constructor(private readonly _router: Router) {
     this._router.events
-      .pipe(filter((event) => event instanceof NavigationEnd))
-      .subscribe((event) => {});
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe((e) => {
+        const id = e.url.replace('/', '');
+        this.currentScenario =
+          this.scenarioList.map((s) => s.id).indexOf(id) > -1 ? id : '';
+      });
   }
 
   ngOnInit(): void {}

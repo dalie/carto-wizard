@@ -8,7 +8,12 @@ const routes: Routes = scenarios.map((s) => {
     component: s.component,
   };
 });
-console.log(routes);
+
+routes.push({
+  path: '**',
+  redirectTo: '/',
+});
+
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule],
