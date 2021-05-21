@@ -1,5 +1,6 @@
 <div class="ui">
-  <app-panel *ngIf="!gameStarted" class="scenario">
+  <app-timer *ngIf="gameStarted$ | async" [active]="true" class="timer"></app-timer>
+  <app-panel *ngIf="!(gameStarted$ |async)" class="scenario">
     <app-panel-title><span>US States</span></app-panel-title>
 
     <div class="content">

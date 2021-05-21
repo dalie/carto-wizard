@@ -1,9 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { latLng, MapOptions, tileLayer } from 'leaflet';
-import { BehaviorSubject } from 'rxjs';
-import { scenarios } from './scenarios/scenarios';
 import { filter } from 'rxjs/internal/operators';
+import { scenarios } from './scenarios/scenarios';
 
 @Component({
   selector: 'app-root',
@@ -13,9 +12,7 @@ import { filter } from 'rxjs/internal/operators';
 })
 export class AppComponent implements OnInit {
   currentScenario = '';
-
   scenarioList = scenarios;
-
   options: MapOptions = {
     zoomControl: false,
     layers: [

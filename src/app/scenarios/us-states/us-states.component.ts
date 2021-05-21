@@ -10,11 +10,12 @@ import { BehaviorSubject } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UsStatesComponent implements OnInit {
+  private _gameStarted$ = new BehaviorSubject<boolean>(false);
   private _layers$ = new BehaviorSubject<Layer[]>([]);
 
+  gameStarted$ = this._gameStarted$.asObservable();
   layers$ = this._layers$.asObservable();
 
-  gameStarted = false;
   constructor(private readonly _http: HttpClient) {}
 
   ngOnInit(): void {
@@ -37,6 +38,7 @@ export class UsStatesComponent implements OnInit {
   }
 
   startGame() {
+    this._gameStarted$.next(true);
     console.log('start');
   }
 
