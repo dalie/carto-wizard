@@ -13,6 +13,8 @@ export class UsStatesComponent implements OnInit {
   private _layers$ = new BehaviorSubject<Layer[]>([]);
 
   layers$ = this._layers$.asObservable();
+
+  gameStarted = false;
   constructor(private readonly _http: HttpClient) {}
 
   ngOnInit(): void {
@@ -32,6 +34,10 @@ export class UsStatesComponent implements OnInit {
         ]);
       },
     });
+  }
+
+  startGame() {
+    console.log('start');
   }
 
   private highlightFeature = (event: LayerEvent) => {

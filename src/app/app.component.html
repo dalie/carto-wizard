@@ -4,8 +4,8 @@
       >Back</a
     >
   </div>
-  <div *ngIf="!currentScenario" class="docs-app-background scenarios">
-    <mat-toolbar color="primary"><span>Carto Wizard</span> </mat-toolbar>
+  <app-panel *ngIf="!currentScenario" class="scenarios">
+    <app-panel-title><span>Carto Wizard</span></app-panel-title>
     <mat-nav-list>
       <a
         mat-list-item
@@ -15,7 +15,7 @@
         >{{ scenario.name }}
       </a>
     </mat-nav-list>
-  </div>
+  </app-panel>
 </div>
 <div class="map" leaflet [leafletOptions]="options">
   <router-outlet></router-outlet>

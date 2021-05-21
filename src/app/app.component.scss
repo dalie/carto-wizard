@@ -18,20 +18,12 @@
     }
   }
   > .scenarios {
+    display: block;
     grid-area: center;
-    border-radius: 5px;
-    box-shadow: 5px 5px 5px rgba(black, 0.5);
-    background-color: #303030;
     pointer-events: all;
+    flex-grow: 1;
     margin: 200px auto auto auto;
     width: 600px;
-
-    flex-grow: 1;
-
-    mat-toolbar {
-      border-top-left-radius: 5px;
-      border-top-right-radius: 5px;
-    }
   }
 }
 

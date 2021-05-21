@@ -1,1 +1,13 @@
+<div class="ui">
+  <app-panel *ngIf="!gameStarted" class="scenario">
+    <app-panel-title><span>US States</span></app-panel-title>
+
+    <div class="content">
+      <p>Identify each states.</p>
+      <button mat-raised-button color="primary" (click)="startGame()">
+        Start
+      </button>
+    </div>
+  </app-panel>
+</div>
 <div *ngFor="let layer of layers$ | async" [leafletLayer]="layer"></div>

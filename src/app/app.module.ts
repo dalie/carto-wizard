@@ -9,9 +9,11 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { UsStatesComponent } from './scenarios/us-states/us-states.component';
 import { MatListModule } from '@angular/material/list';
+import { PanelComponent } from './panel/panel.component';
+import { PanelTitleComponent } from './panel-title/panel-title.component';
 
 @NgModule({
-  declarations: [AppComponent, UsStatesComponent],
+  declarations: [AppComponent, UsStatesComponent, PanelComponent, PanelTitleComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
