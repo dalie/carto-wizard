@@ -6,7 +6,7 @@
   pointer-events: none;
   display: grid;
   grid-template-areas:
-    ". . timer"
+    "header header header"
     ". center ."
     ". . .";
   grid-template-rows: 95px auto auto;
@@ -14,6 +14,7 @@
   > .scenario {
     grid-area: center;
     pointer-events: all;
+    margin-top: 100px;
     background-color: #303030;
 
     .content {
@@ -21,8 +22,24 @@
     }
   }
 
-  > .timer {
+  > .header {
+    grid-area: header;
     pointer-events: all;
-    grid-area: timer;
+    background-color: #303030;
+    display: grid;
+    grid-template-areas: "left center right";
+
+    .next-state {
+      grid-area: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      font-weight: bold;
+    }
+
+    .timer {
+      grid-area: right;
+    }
   }
 }

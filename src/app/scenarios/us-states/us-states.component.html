@@ -1,5 +1,12 @@
 <div class="ui">
-  <app-timer *ngIf="gameStarted$ | async" [active]="true" class="timer"></app-timer>
+  <ng-container>
+    <div class="header">
+      <div class="next-state">{{(currentState$ | async)?.name}}</div>
+      <app-timer *ngIf="gameStarted$ | async" [active]="!(gameFinished$ | async)" class="timer"></app-timer>
+    </div>
+
+  </ng-container>
+
   <app-panel *ngIf="!(gameStarted$ |async)" class="scenario">
     <app-panel-title><span>US States</span></app-panel-title>
 

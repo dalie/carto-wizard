@@ -23,11 +23,11 @@ export class TimerComponent implements OnInit {
   elapsedTime$ = this._elapsedTime$.asObservable();
 
   constructor() {
-    timer(0, 1000)
+    timer(0, 10)
       .pipe(takeWhile(() => this.active))
       .subscribe({
         next: () => {
-          this._elapsedTime$.next(this._elapsedTime$.value.plus(1000));
+          this._elapsedTime$.next(this._elapsedTime$.value.plus(10));
         },
       });
   }
