@@ -3,10 +3,12 @@ import {
   Component,
   Input,
   OnInit,
+  Output,
 } from '@angular/core';
 import { Duration } from 'luxon';
 import { BehaviorSubject, timer } from 'rxjs';
 import { takeWhile } from 'rxjs/internal/operators';
+import { TimerService } from './timer.service';
 
 @Component({
   selector: 'app-timer',
@@ -22,12 +24,14 @@ export class TimerComponent implements OnInit {
 
   elapsedTime$ = this._elapsedTime$.asObservable();
 
-  constructor() {
+  constructor(private _timer: TimerService) {
     timer(0, 10)
       .pipe(takeWhile(() => this.active))
       .subscribe({
         next: () => {
-          this._elapsedTime$.next(this._elapsedTime$.value.plus(10));
+          const duration = this._elapsedTime$.value.plus(10);
+          this._elapsedTime$.next(duration);
+          this._timer.time = duration;
         },
       });
   }

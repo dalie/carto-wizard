@@ -1,6 +1,8 @@
 import { HttpClientModule } from '@angular/common/http';
 import { NgModule } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatListModule } from '@angular/material/list';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { BrowserModule } from '@angular/platform-browser';
@@ -32,6 +34,8 @@ import { TimerComponent } from './timer/timer.component';
     MatButtonModule,
     MatListModule,
     MatToolbarModule,
+    ReactiveFormsModule,
+    MatButtonToggleModule,
   ],
   bootstrap: [AppComponent],
 })

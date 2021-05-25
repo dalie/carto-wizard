@@ -19,6 +19,15 @@
 
     .content {
       padding: 10px;
+      display: flex;
+      flex-direction: column;
+
+      p {
+        width: 500px;
+      }
+      > * {
+        margin: 20px;
+      }
     }
   }
 

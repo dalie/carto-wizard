@@ -1,20 +1,59 @@
-<div class="ui">
+<div *ngIf="gameStatus$ | async as gameStatus" class="ui">
   <ng-container>
     <div class="header">
-      <div class="next-state">{{(currentState$ | async)?.name}}</div>
-      <app-timer *ngIf="gameStarted$ | async" [active]="!(gameFinished$ | async)" class="timer"></app-timer>
-    </div>
+      <div class="next-state">{{ (currentState$ | async)?.name }}</div>
 
+      <app-timer
+        *ngIf="
+          gameStatus === GameStatus.STARTED ||
+          gameStatus === GameStatus.FINISHED
+        "
+        [active]="gameStatus !== GameStatus.FINISHED"
+        class="timer"
+      ></app-timer>
+    </div>
   </ng-container>
 
-  <app-panel *ngIf="!(gameStarted$ |async)" class="scenario">
+  <app-panel *ngIf="gameStatus === GameStatus.LOBBY" class="scenario">
     <app-panel-title><span>US States</span></app-panel-title>
 
     <div class="content">
-      <p>Identify each states.</p>
+      <div>
+        <mat-button-toggle-group [formControl]="gameDifficultyControl">
+          <mat-button-toggle [value]="GameDifficulty.EASY"
+            >Easy</mat-button-toggle
+          >
+          <mat-button-toggle [value]="GameDifficulty.MEDIUM"
+            >Medium</mat-button-toggle
+          >
+          <mat-button-toggle [value]="GameDifficulty.HARD"
+            >Hard</mat-button-toggle
+          >
+        </mat-button-toggle-group>
+      </div>
+      <p *ngIf="gameDifficulty === GameDifficulty.EASY">
+        EASY: All states outline are shown and fill in map as you progress.
+      </p>
+      <p *ngIf="gameDifficulty === GameDifficulty.MEDIUM">
+        MEDIUM: All states outline are shown but already identified states are
+        not shown.
+      </p>
+      <p *ngIf="gameDifficulty === GameDifficulty.HARD">
+        HARD: No outline, good luck!
+      </p>
       <button mat-raised-button color="primary" (click)="startGame()">
         Start
       </button>
+    </div>
+  </app-panel>
+  <app-panel *ngIf="gameStatus == GameStatus.FINISHED" class="scenario">
+    <app-panel-title><span>Finished!</span></app-panel-title>
+    <div class="content">
+      <p>Time: {{ time$ | async | durationToFormat: "mm:ss" }}</p>
+      <p>Score: {{ score$ | async }}</p>
+      <a mat-raised-button color="primary" [routerLink]="['us-states']">
+        Retry
+      </a>
     </div>
   </app-panel>
 </div>
