@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { latLng, MapOptions, tileLayer } from 'leaflet';
+import { latLng, Map, MapOptions, tileLayer } from 'leaflet';
 import { filter } from 'rxjs/internal/operators';
 import { scenarios } from './scenarios/scenarios';
 
@@ -40,4 +40,8 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {}
+
+  onMapReady(map: Map) {
+    //TODO pass map to scenarios to fix drag/click bug
+  }
 }
