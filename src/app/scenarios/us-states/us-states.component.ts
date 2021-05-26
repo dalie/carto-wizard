@@ -2,10 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { FeatureCollection } from 'geojson';
+import * as L from 'leaflet';
 import { FeatureGroup, geoJSON, Layer, LayerEvent, LayerGroup } from 'leaflet';
 import { Duration } from 'luxon';
 import { BehaviorSubject } from 'rxjs';
 import { TimerService } from 'src/app/timer/timer.service';
+import { ScenarioService } from '../scenario.service';
 
 interface State {
   id: string;
@@ -31,6 +33,7 @@ enum GameDifficulty {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UsStatesComponent implements OnInit {
+  private _mouseDown = false;
   private _featres: FeatureGroup[] = [];
   private _score = 0;
   private _score$ = new BehaviorSubject<number>(-1);
@@ -100,7 +103,8 @@ export class UsStatesComponent implements OnInit {
 
   constructor(
     private readonly _http: HttpClient,
-    private readonly _timer: TimerService
+    private readonly _timer: TimerService,
+    private readonly _scenarioService: ScenarioService
   ) {}
 
   ngOnInit(): void {}
@@ -128,6 +132,13 @@ export class UsStatesComponent implements OnInit {
             onEachFeature: this.onEachFeature,
           }),
         ]);
+        this._scenarioService.map$.subscribe({
+          next: (m) => {
+            m?.on('move', () => {
+              this._mouseDown = false;
+            });
+          },
+        });
         this._score = 0;
         this._currentState$.next(this._states[0]);
         this._gameStatus$.next(GameStatus.STARTED);
@@ -136,46 +147,72 @@ export class UsStatesComponent implements OnInit {
   }
 
   private onStateClick = (event: LayerEvent) => {
-    const stateId = event.target.feature.id;
-    if (
-      this.gameDifficulty !== GameDifficulty.EASY ||
-      this._states.find((s) => s.id === stateId)
-    ) {
-      let layer: FeatureGroup = event.target;
-      if (stateId === this._currentState$.value.id) {
-        layer.setStyle(this._styleCorrect);
-        this._states = this._states.filter((s) => s.id !== stateId);
-        this._score += 100 * this.gameDifficulty;
-        if (this._states.length) {
-          this._currentState$.next(this._states[0]);
+    if (this._mouseDown) {
+      this._mouseDown = false;
+      const stateId = event.target.feature.id;
+      if (
+        this.gameDifficulty !== GameDifficulty.EASY ||
+        this._states.find((s) => s.id === stateId)
+      ) {
+        let layer: FeatureGroup = event.target;
+        if (stateId === this._currentState$.value.id) {
+          layer.setStyle(this._styleCorrect);
+          this._states = this._states.filter((s) => s.id !== stateId);
+          this._score += 100 * this.gameDifficulty;
+          if (this._states.length) {
+            this._currentState$.next(this._states[0]);
+          } else {
+            this.endGame();
+          }
         } else {
-          this.endGame();
-        }
-      } else {
-        layer = this._featres.find(
-          (f) => (<any>f).feature.id === this._currentState$.value.id
-        ) as any;
+          layer = this._featres.find(
+            (f) => (<any>f).feature.id === this._currentState$.value.id
+          ) as any;
 
-        layer.setStyle(this._styleWrong);
-        this._states = this._states.filter(
-          (s) => s.id !== this._currentState$.value.id
-        );
+          this._scenarioService.map$.subscribe({
+            next: (m) => {
+              m?.panInsideBounds(layer.getBounds(), {
+                animate: true,
+              });
+            },
+          });
 
-        if (this._states.length >= 0) {
-          this._currentState$.next(this._states[0]);
-        } else {
-          this.endGame();
-        }
-      }
-
-      if (this.gameDifficulty !== GameDifficulty.EASY) {
-        setTimeout(() => {
-          layer.setStyle(
-            this.gameDifficulty === GameDifficulty.HARD
-              ? this._styleTransparent
-              : this._styleNeutral
+          layer.setStyle(this._styleWrong);
+          this._states = this._states.filter(
+            (s) => s.id !== this._currentState$.value.id
           );
-        }, 1000);
+
+          if (this._states.length >= 0) {
+            this._currentState$.next(this._states[0]);
+          } else {
+            this.endGame();
+          }
+        }
+
+        let label: L.Marker;
+        this._scenarioService.map$.subscribe({
+          next: (m) => {
+            label = L.marker(layer.getBounds().getCenter(), {
+              interactive: false,
+              icon: L.divIcon({
+                className: 'map-label',
+                html: (layer as any).feature.properties.name,
+                iconSize: [140, 20],
+              }),
+            }).addTo(this._layers$.value[0] as any);
+          },
+        });
+
+        if (this.gameDifficulty !== GameDifficulty.EASY) {
+          setTimeout(() => {
+            layer.setStyle(
+              this.gameDifficulty === GameDifficulty.HARD
+                ? this._styleTransparent
+                : this._styleNeutral
+            );
+            label.remove();
+          }, 1000);
+        }
       }
     }
   };
@@ -216,6 +253,9 @@ export class UsStatesComponent implements OnInit {
     this._featres.push(layer as any);
 
     layer.on({
+      mousedown: () => {
+        this._mouseDown = true;
+      },
       mouseup: this.onStateClick,
       mouseover: this.highlightFeature,
       mouseout: this.revertStyle,

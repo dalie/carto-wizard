@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { latLng, Map, MapOptions, tileLayer } from 'leaflet';
 import { filter } from 'rxjs/internal/operators';
+import { ScenarioService } from './scenarios/scenario.service';
 import { scenarios } from './scenarios/scenarios';
 
 @Component({
@@ -29,7 +30,10 @@ export class AppComponent implements OnInit {
     center: latLng(39.7108757, -101.05818),
   };
 
-  constructor(private readonly _router: Router) {
+  constructor(
+    private readonly _router: Router,
+    private readonly _scenarioService: ScenarioService
+  ) {
     this._router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((e) => {
@@ -42,6 +46,6 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {}
 
   onMapReady(map: Map) {
-    //TODO pass map to scenarios to fix drag/click bug
+    this._scenarioService.setMap(map);
   }
 }

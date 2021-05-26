@@ -2,10 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { FeatureCollection } from 'geojson';
+import * as L from 'leaflet';
 import { FeatureGroup, geoJSON, Layer, LayerEvent } from 'leaflet';
 import { Duration } from 'luxon';
 import { BehaviorSubject } from 'rxjs';
 import { TimerService } from 'src/app/timer/timer.service';
+import { ScenarioService } from '../scenario.service';
 
 interface Country {
   id: string;
@@ -101,7 +103,8 @@ export class WorldCountriesComponent implements OnInit {
 
   constructor(
     private readonly _http: HttpClient,
-    private readonly _timer: TimerService
+    private readonly _timer: TimerService,
+    private readonly _scenarioService: ScenarioService
   ) {}
 
   ngOnInit(): void {}
@@ -132,6 +135,13 @@ export class WorldCountriesComponent implements OnInit {
         this._score = 0;
         this._currentCountry$.next(this._countries[0]);
         this._gameStatus$.next(GameStatus.STARTED);
+        this._scenarioService.map$.subscribe({
+          next: (m) => {
+            m?.on('move', () => {
+              this._mouseDown = false;
+            });
+          },
+        });
       },
     });
   }
@@ -165,13 +175,33 @@ export class WorldCountriesComponent implements OnInit {
           this._countries = this._countries.filter(
             (s) => s.id !== this._currentCountry$.value.id
           );
-
+          this._scenarioService.map$.subscribe({
+            next: (m) => {
+              m?.panInsideBounds(layer.getBounds(), {
+                animate: true,
+              });
+            },
+          });
           if (this._countries.length >= 0) {
             this._currentCountry$.next(this._countries[0]);
           } else {
             this.endGame();
           }
         }
+
+        let label: L.Marker;
+        this._scenarioService.map$.subscribe({
+          next: (m) => {
+            label = L.marker(layer.getBounds().getCenter(), {
+              interactive: false,
+              icon: L.divIcon({
+                className: 'map-label',
+                html: (layer as any).feature.properties.name,
+                iconSize: [140, 20],
+              }),
+            }).addTo(this._layers$.value[0] as any);
+          },
+        });
 
         if (this.gameDifficulty !== GameDifficulty.EASY) {
           setTimeout(() => {
@@ -180,6 +210,7 @@ export class WorldCountriesComponent implements OnInit {
                 ? this._styleTransparent
                 : this._styleNeutral
             );
+            label.remove();
           }, 1000);
         }
       }
