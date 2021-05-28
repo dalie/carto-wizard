@@ -38,7 +38,7 @@
     display: grid;
     grid-template-areas: "left center right";
 
-    .next-state {
+    .next-feature {
       grid-area: center;
       display: flex;
       align-items: center;
@@ -49,6 +49,7 @@
 
     .timer {
       grid-area: right;
+      display: flex;
     }
   }
 }

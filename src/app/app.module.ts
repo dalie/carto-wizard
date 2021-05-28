@@ -13,9 +13,8 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { PanelTitleComponent } from './panel-title/panel-title.component';
 import { PanelComponent } from './panel/panel.component';
-import { UsStatesComponent } from './scenarios/us-states/us-states.component';
-import { WorldCountriesComponent } from './scenarios/world-countries/world-countries.component';
 import { TimerComponent } from './timer/timer.component';
+import { ScenarioComponent } from './scenarios/scenario/scenario.component';
 
 @NgModule({
   declarations: [
@@ -23,8 +22,7 @@ import { TimerComponent } from './timer/timer.component';
     PanelComponent,
     PanelTitleComponent,
     TimerComponent,
-    UsStatesComponent,
-    WorldCountriesComponent,
+    ScenarioComponent,
   ],
   imports: [
     AppRoutingModule,

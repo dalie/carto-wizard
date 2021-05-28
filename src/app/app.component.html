@@ -10,7 +10,7 @@
       <a
         mat-list-item
         *ngFor="let scenario of scenarioList"
-        [routerLink]="[scenario.id]"
+        [routerLink]="['scenario', scenario.id]"
         (click)="currentScenario = scenario.id"
         >{{ scenario.name }}
       </a>

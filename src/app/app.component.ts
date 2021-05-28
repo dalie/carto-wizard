@@ -15,6 +15,7 @@ export class AppComponent implements OnInit {
   currentScenario = '';
   scenarioList = scenarios;
   options: MapOptions = {
+    worldCopyJump: true,
     zoomControl: false,
     layers: [
       tileLayer(
@@ -37,9 +38,9 @@ export class AppComponent implements OnInit {
     this._router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((e) => {
-        const id = e.url.replace('/', '');
-        this.currentScenario =
-          this.scenarioList.map((s) => s.id).indexOf(id) > -1 ? id : '';
+        if (e.url.indexOf('/scenario/') === 0) {
+          this.currentScenario = e.url.replace('/scenario/', '');
+        }
       });
   }
 

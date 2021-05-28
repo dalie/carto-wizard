@@ -1,18 +1,17 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { scenarios } from './scenarios/scenarios';
+import { ScenarioComponent } from './scenarios/scenario/scenario.component';
 
-const routes: Routes = scenarios.map((s) => {
-  return {
-    path: s.id,
-    component: s.component,
-  };
-});
-
-routes.push({
-  path: '**',
-  redirectTo: '/',
-});
+const routes: Routes = [
+  {
+    path: 'scenario/:scenarioId',
+    component: ScenarioComponent,
+  },
+  {
+    path: '**',
+    redirectTo: '/',
+  },
+];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],

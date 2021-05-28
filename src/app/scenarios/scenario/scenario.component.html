@@ -1,7 +1,7 @@
 <div *ngIf="gameStatus$ | async as gameStatus" class="ui">
   <ng-container>
     <div class="header">
-      <div class="next-country">{{ (currentCountry$ | async)?.name }}</div>
+      <div class="next-feature">{{ (currentFeature$ | async)?.name }}</div>
       <div class="timer">
         <button mat-raised-button (click)="endGame()">Give Up</button>
         <app-timer
@@ -16,7 +16,9 @@
   </ng-container>
 
   <app-panel *ngIf="gameStatus === GameStatus.LOBBY" class="scenario">
-    <app-panel-title><span>World Countries</span></app-panel-title>
+    <app-panel-title
+      ><span>{{ (currentScenario$ | async)?.name }}</span></app-panel-title
+    >
 
     <div class="content">
       <div>

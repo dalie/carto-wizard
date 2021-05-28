@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { FeatureCollection } from 'geojson';
 import * as L from 'leaflet';
 import { FeatureGroup, geoJSON, Layer, LayerEvent } from 'leaflet';
@@ -8,8 +9,9 @@ import { Duration } from 'luxon';
 import { BehaviorSubject } from 'rxjs';
 import { TimerService } from 'src/app/timer/timer.service';
 import { ScenarioService } from '../scenario.service';
+import { Scenario, scenarios } from '../scenarios';
 
-interface Country {
+interface ScenarioFeature {
   id: string;
   name: string;
 }
@@ -27,25 +29,29 @@ enum GameDifficulty {
 }
 
 @Component({
-  selector: 'app-world-countries',
-  templateUrl: './world-countries.component.html',
-  styleUrls: ['./world-countries.component.scss'],
+  selector: 'app-scenario',
+  templateUrl: './scenario.component.html',
+  styleUrls: ['./scenario.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WorldCountriesComponent implements OnInit {
+export class ScenarioComponent implements OnInit {
   private _mouseDown = false;
-  private _featres: FeatureGroup[] = [];
+  private _geoJsonfeatures: FeatureGroup[] = [];
   private _score = 0;
   private _score$ = new BehaviorSubject<number>(-1);
   private _time$ = new BehaviorSubject<Duration>(Duration.fromMillis(0));
   private _gameStatus$ = new BehaviorSubject<GameStatus>(GameStatus.LOBBY);
   private _layers$ = new BehaviorSubject<Layer[]>([]);
 
-  private _countries: Country[] = [];
-  private _currentCountry$ = new BehaviorSubject<Country>({
+  private _scenarioFeatures: ScenarioFeature[] = [];
+  private _currentFeature$ = new BehaviorSubject<ScenarioFeature>({
     id: '',
     name: '',
   });
+
+  private _currentScenario$ = new BehaviorSubject<Scenario | undefined>(
+    undefined
+  );
 
   private _styleNeutral = {
     color: '#1E90FF',
@@ -89,7 +95,8 @@ export class WorldCountriesComponent implements OnInit {
   GameStatus = GameStatus;
 
   score$ = this._score$.asObservable();
-  currentCountry$ = this._currentCountry$.asObservable();
+  currentFeature$ = this._currentFeature$.asObservable();
+  currentScenario$ = this._currentScenario$.asObservable();
 
   gameStatus$ = this._gameStatus$.asObservable();
   layers$ = this._layers$.asObservable();
@@ -103,77 +110,105 @@ export class WorldCountriesComponent implements OnInit {
 
   constructor(
     private readonly _http: HttpClient,
-    private readonly _timer: TimerService,
-    private readonly _scenarioService: ScenarioService
+    private readonly _route: ActivatedRoute,
+    private readonly _scenarioService: ScenarioService,
+    private readonly _timer: TimerService
   ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    const scenarioId = this._route.snapshot.params['scenarioId'];
+    if (scenarioId) {
+      this._currentScenario$.next(scenarios.find((s) => s.id === scenarioId));
+      this._scenarioService.map$.subscribe({
+        next: (m) => {
+          m?.panTo(this._currentScenario$.value?.center as any);
+        },
+      });
+    }
+  }
 
   startGame() {
-    this._http.get('./assets/geojson/world-countries.json').subscribe({
-      next: (data) => {
-        this._countries = (data as FeatureCollection).features
-          .map((f) => {
-            return {
-              id: f.properties?.iso_a3 as string,
-              name: f.properties?.name,
-            };
-          })
-          .map((a) => ({ sort: Math.random(), value: a }))
-          .sort((a, b) => a.sort - b.sort)
-          .map((a) => a.value);
+    if (this._currentScenario$.value) {
+      this._http
+        .get(`./assets/geojson/${this._currentScenario$.value?.id}.json`)
+        .subscribe({
+          next: (data: any) => {
+            // data.features = (data as FeatureCollection).features.filter(
+            //   (f) => f.properties?.continent === 'Africa'
+            // );
+            let idCount = 0;
+            (data as FeatureCollection).features.forEach((f) => {
+              f.id = idCount++;
+              f.properties = {
+                name: f.properties?.name,
+                continent: f.properties?.continent,
+              };
+            });
+            //console.log(JSON.stringify(data));
 
-        this._layers$.next([
-          geoJSON(data as any, {
-            style:
-              this.gameDifficulty !== GameDifficulty.HARD
-                ? this._styleNeutral
-                : this._styleTransparent,
-            onEachFeature: this.onEachFeature,
-          }),
-        ]);
-        this._score = 0;
-        this._currentCountry$.next(this._countries[0]);
-        this._gameStatus$.next(GameStatus.STARTED);
-        this._scenarioService.map$.subscribe({
-          next: (m) => {
-            m?.on('move', () => {
-              this._mouseDown = false;
+            this._scenarioFeatures = (data as FeatureCollection).features
+              .map((f) => {
+                return {
+                  id: f.id as string,
+                  name: f.properties?.name,
+                };
+              })
+              .map((a) => ({ sort: Math.random(), value: a }))
+              .sort((a, b) => a.sort - b.sort)
+              .map((a) => a.value);
+
+            this._layers$.next([
+              geoJSON(data as any, {
+                style:
+                  this.gameDifficulty !== GameDifficulty.HARD
+                    ? this._styleNeutral
+                    : this._styleTransparent,
+                onEachFeature: this.onEachFeature,
+              }),
+            ]);
+            this._score = 0;
+            this._currentFeature$.next(this._scenarioFeatures[0]);
+            this._gameStatus$.next(GameStatus.STARTED);
+            this._scenarioService.map$.subscribe({
+              next: (m) => {
+                m?.on('move', () => {
+                  this._mouseDown = false;
+                });
+              },
             });
           },
         });
-      },
-    });
+    }
   }
 
-  private onCountryClick = (event: LayerEvent) => {
+  private onFeatureClick = (event: LayerEvent) => {
     if (this._mouseDown) {
       this._mouseDown = false;
-      const countryId = event.target.feature.properties.iso_a3;
+      const featureId = event.target.feature.id;
       if (
         this.gameDifficulty !== GameDifficulty.EASY ||
-        this._countries.find((s) => s.id === countryId)
+        this._scenarioFeatures.find((f) => f.id === featureId)
       ) {
         let layer: FeatureGroup = event.target;
-        if (countryId === this._currentCountry$.value.id) {
+        if (featureId === this._currentFeature$.value.id) {
           layer.setStyle(this._styleCorrect);
-          this._countries = this._countries.filter((s) => s.id !== countryId);
+          this._scenarioFeatures = this._scenarioFeatures.filter(
+            (f) => f.id !== featureId
+          );
           this._score += 100 * this.gameDifficulty;
-          if (this._countries.length) {
-            this._currentCountry$.next(this._countries[0]);
+          if (this._scenarioFeatures.length) {
+            this._currentFeature$.next(this._scenarioFeatures[0]);
           } else {
             this.endGame();
           }
         } else {
-          layer = this._featres.find(
-            (f) =>
-              (<any>f).feature.properties.iso_a3 ===
-              this._currentCountry$.value.id
+          layer = this._geoJsonfeatures.find(
+            (f) => (<any>f).feature.id === this._currentFeature$.value.id
           ) as any;
 
           layer.setStyle(this._styleWrong);
-          this._countries = this._countries.filter(
-            (s) => s.id !== this._currentCountry$.value.id
+          this._scenarioFeatures = this._scenarioFeatures.filter(
+            (f) => f.id !== this._currentFeature$.value.id
           );
           this._scenarioService.map$.subscribe({
             next: (m) => {
@@ -182,8 +217,8 @@ export class WorldCountriesComponent implements OnInit {
               });
             },
           });
-          if (this._countries.length >= 0) {
-            this._currentCountry$.next(this._countries[0]);
+          if (this._scenarioFeatures.length >= 0) {
+            this._currentFeature$.next(this._scenarioFeatures[0]);
           } else {
             this.endGame();
           }
@@ -218,7 +253,7 @@ export class WorldCountriesComponent implements OnInit {
   };
 
   public endGame() {
-    this._currentCountry$.next({
+    this._currentFeature$.next({
       id: '',
       name: '',
     });
@@ -228,8 +263,8 @@ export class WorldCountriesComponent implements OnInit {
     this._gameStatus$.next(GameStatus.FINISHED);
   }
   private highlightFeature = (event: LayerEvent) => {
-    const state = this._countries.find(
-      (s) => s.id === event.target.feature.properties.iso_a3
+    const state = this._scenarioFeatures.find(
+      (f) => f.id === event.target.feature.id
     );
     if (
       (this.gameDifficulty === GameDifficulty.EASY && !!state) ||
@@ -241,8 +276,8 @@ export class WorldCountriesComponent implements OnInit {
   };
 
   private revertStyle = (event: LayerEvent) => {
-    const state = this._countries.find(
-      (s) => s.id === event.target.feature.properties.iso_a3
+    const state = this._scenarioFeatures.find(
+      (f) => f.id === event.target.feature.id
     );
     if (
       (this.gameDifficulty === GameDifficulty.EASY && !!state) ||
@@ -254,14 +289,14 @@ export class WorldCountriesComponent implements OnInit {
   };
 
   private onEachFeature = (f: GeoJSON.Feature, layer: Layer) => {
-    this._featres.push(layer as any);
+    this._geoJsonfeatures.push(layer as any);
 
     layer.on({
       mousedown: () => {
         this._mouseDown = true;
       },
 
-      mouseup: this.onCountryClick,
+      mouseup: this.onFeatureClick,
       mouseover: this.highlightFeature,
       mouseout: this.revertStyle,
     });
