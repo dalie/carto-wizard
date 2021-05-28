@@ -121,7 +121,10 @@ export class ScenarioComponent implements OnInit {
       this._currentScenario$.next(scenarios.find((s) => s.id === scenarioId));
       this._scenarioService.map$.subscribe({
         next: (m) => {
-          m?.panTo(this._currentScenario$.value?.center as any);
+          m?.setView(
+            this._currentScenario$.value?.center as any,
+            this._currentScenario$.value?.zoom || 4
+          );
         },
       });
     }
@@ -134,17 +137,17 @@ export class ScenarioComponent implements OnInit {
         .subscribe({
           next: (data: any) => {
             // data.features = (data as FeatureCollection).features.filter(
-            //   (f) => f.properties?.continent === 'Africa'
+            //   (f) => f.properties?.continent === 'South America'
             // );
             let idCount = 0;
             (data as FeatureCollection).features.forEach((f) => {
               f.id = idCount++;
-              f.properties = {
-                name: f.properties?.name,
-                continent: f.properties?.continent,
-              };
+              // f.properties = {
+              //   name: f.properties?.name,
+              //   continent: f.properties?.continent,
+              // };
             });
-            //console.log(JSON.stringify(data));
+            // console.log(JSON.stringify(data));
 
             this._scenarioFeatures = (data as FeatureCollection).features
               .map((f) => {
