@@ -3,7 +3,6 @@
     <div class="header">
       <div class="next-feature">{{ (currentFeature$ | async)?.name }}</div>
       <div class="timer">
-        <button mat-raised-button (click)="endGame()">Give Up</button>
         <app-timer
           *ngIf="
             gameStatus === GameStatus.STARTED ||

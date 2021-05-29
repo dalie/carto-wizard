@@ -13,6 +13,8 @@
 
   > .back {
     a {
+      position: absolute;
+      bottom: 25px;
       pointer-events: all;
       margin: 25px;
     }
