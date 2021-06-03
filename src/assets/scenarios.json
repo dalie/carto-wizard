@@ -1,0 +1,22 @@
+[
+  {
+    "id": "find-world-countries",
+    "dataFile": "world-countries.json",
+    "description": "Can you find the countries on the map?",
+    "labelType": "string",
+    "labelAccessor": "name",
+    "mode": "Find",
+    "name": "Find all countries of the world",
+    "startPosition": [39, -101]
+  },
+  {
+    "id": "identify-world-countries",
+    "dataFile": "world-countries.json",
+    "description": "Can you find the countries on the map?",
+    "labelType": "string",
+    "labelAccessor": "name",
+    "mode": "Find",
+    "name": "Identify all countries of the world",
+    "startPosition": [39, -101]
+  }
+]

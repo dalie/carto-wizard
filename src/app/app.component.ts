@@ -1,9 +1,9 @@
+import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
-import { latLng, Map, MapOptions, tileLayer } from 'leaflet';
-import { filter } from 'rxjs/internal/operators';
-import { ScenarioService } from './scenarios/scenario.service';
-import { scenarios } from './scenarios/scenarios';
+import { latLng, MapOptions, tileLayer } from 'leaflet';
+import { BehaviorSubject } from 'rxjs';
+import { take } from 'rxjs/internal/operators';
+import { GameScenario } from './game.models';
 
 @Component({
   selector: 'app-root',
@@ -12,8 +12,10 @@ import { scenarios } from './scenarios/scenarios';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent implements OnInit {
-  currentScenario = '';
-  scenarioList = scenarios;
+  private readonly _scenarios$ = new BehaviorSubject<GameScenario[]>([]);
+
+  readonly scenarios$ = this._scenarios$.asObservable();
+
   options: MapOptions = {
     worldCopyJump: true,
     zoomControl: false,
@@ -31,22 +33,16 @@ export class AppComponent implements OnInit {
     center: latLng(39.7108757, -101.05818),
   };
 
-  constructor(
-    private readonly _router: Router,
-    private readonly _scenarioService: ScenarioService
-  ) {
-    this._router.events
-      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
-      .subscribe((e) => {
-        if (e.url.indexOf('/scenario/') === 0) {
-          this.currentScenario = e.url.replace('/scenario/', '');
-        }
+  constructor(private readonly _http: HttpClient) {}
+
+  ngOnInit(): void {
+    this._http
+      .get<GameScenario[]>('./assets/scenarios.json')
+      .pipe(take(1))
+      .subscribe({
+        next: (scenarios) => {
+          this._scenarios$.next(scenarios);
+        },
       });
-  }
-
-  ngOnInit(): void {}
-
-  onMapReady(map: Map) {
-    this._scenarioService.setMap(map);
   }
 }

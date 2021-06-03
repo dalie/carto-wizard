@@ -1,27 +1,38 @@
 <div class="ui">
-  <div *ngIf="currentScenario" class="back">
-    <a mat-raised-button [routerLink]="['']" (click)="currentScenario = ''"
-      >Back</a
-    >
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-xxl">
+      <a class="navbar-brand" href="#">CartoWizard</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="#">Maps</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <div *ngIf="scenarios$ | async as scenarios" class="container-xxl">
+    <div class="list-group">
+      <button
+        *ngFor="let scenario of scenarios"
+        type="button"
+        class="list-group-item list-group-item-action"
+        aria-current="true"
+      >
+        {{ scenario.name }}
+      </button>
+    </div>
   </div>
-  <app-panel *ngIf="!currentScenario" class="scenarios">
-    <app-panel-title><span>Carto Wizard</span></app-panel-title>
-    <mat-nav-list>
-      <a
-        mat-list-item
-        *ngFor="let scenario of scenarioList"
-        [routerLink]="['scenario', scenario.id]"
-        (click)="currentScenario = scenario.id"
-        >{{ scenario.name }}
-      </a>
-    </mat-nav-list>
-  </app-panel>
 </div>
-<div
-  class="map"
-  leaflet
-  [leafletOptions]="options"
-  (leafletMapReady)="onMapReady($event)"
->
-  <router-outlet></router-outlet>
-</div>
+<div class="map" leaflet [leafletOptions]="options"></div>

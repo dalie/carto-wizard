@@ -1,4 +1,9 @@
 /* You can add global styles to this file, and also import other style files */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Odibee+Sans&display=swap");
+@import "styles-bootstrap.scss";
+@import "~bootstrap/scss/bootstrap";
+
 html,
 body,
 app-root {
@@ -11,7 +16,6 @@ app-root {
 body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
-  color: #ffffff;
 
   .map-label {
     white-space: nowrap;
