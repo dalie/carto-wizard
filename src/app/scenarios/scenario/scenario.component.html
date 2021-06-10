@@ -1,7 +1,16 @@
 <div *ngIf="gameStatus$ | async as gameStatus" class="ui">
   <ng-container>
     <div class="header">
-      <div class="next-feature">{{ (currentFeature$ | async)?.name }}</div>
+      <div class="next-feature">
+        <ng-container *ngIf="currentFeature$ | async as feature">
+          <span>{{ feature.name }}</span>
+          <img
+            class="flag"
+            *ngIf="feature.code"
+            [src]="getImageUrl(feature.code)"
+          />
+        </ng-container>
+      </div>
       <div class="timer">
         <app-timer
           *ngIf="

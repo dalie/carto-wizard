@@ -28,6 +28,14 @@ export const scenarios: Scenario[] = [
     name: 'Canadian Provinces',
     zoom: 4,
   },
+
+  {
+    id: 'f1-tracks',
+    center: [20, 20],
+    data: 'f1-tracks.json',
+    name: 'F1 Tracks',
+    zoom: 4,
+  },
   {
     id: 'north-america-countries',
     center: [45, -100],

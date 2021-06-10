@@ -1596,7 +1596,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Korea", "continent": "Asia" },
+      "properties": { "name": "South Korea", "continent": "Asia" },
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -1648,7 +1648,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Lao PDR", "continent": "Asia" },
+      "properties": { "name": "Lao", "continent": "Asia" },
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -2412,7 +2412,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Dem. Rep. Korea", "continent": "Asia" },
+      "properties": { "name": "North Korea", "continent": "Asia" },
       "geometry": {
         "type": "Polygon",
         "coordinates": [

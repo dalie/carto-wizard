@@ -13,6 +13,7 @@ import { Scenario, scenarios } from '../scenarios';
 
 interface ScenarioFeature {
   id: string;
+  code?: string;
   name: string;
 }
 
@@ -46,6 +47,7 @@ export class ScenarioComponent implements OnInit {
   private _scenarioFeatures: ScenarioFeature[] = [];
   private _currentFeature$ = new BehaviorSubject<ScenarioFeature>({
     id: '',
+    code: '',
     name: '',
   });
 
@@ -130,6 +132,10 @@ export class ScenarioComponent implements OnInit {
     }
   }
 
+  getImageUrl(code: string) {
+    return `assets/flags/${code.toLowerCase()}.png`;
+  }
+
   startGame() {
     if (this._currentScenario$.value) {
       this._http
@@ -153,6 +159,7 @@ export class ScenarioComponent implements OnInit {
               .map((f) => {
                 return {
                   id: f.id as string,
+                  code: f.properties?.code,
                   name: f.properties?.name,
                 };
               })
