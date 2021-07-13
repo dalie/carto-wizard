@@ -5,9 +5,15 @@ export function App() {
   const Map = ReactMapboxGl({
     accessToken:
       'pk.eyJ1IjoiZG9taW5pY2FsaWUiLCJhIjoiY2tuZzJ0YWtvMDcwejJxczlwa2NtbW0zeSJ9.ire3NMM19l7z4Zeqa20RVw',
+    dragRotate: false,
+    minZoom: 2,
+    maxZoom: 11,
+    renderWorldCopies: true,
   });
   return (
     <Map
+      center={[20, 20]}
+      zoom={[2]}
       style="mapbox://styles/dominicalie/ckqzmhgmw3h9717uo5z4zvuiz"
       containerStyle={{
         height: '100vh',
