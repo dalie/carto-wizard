@@ -33,7 +33,7 @@ export class App extends Component {
           promoteId="code"
           tileJsonSource={{
             type: 'vector',
-            url: 'mapbox://dominicalie.af7vqzpf',
+            url: 'mapbox://dominicalie.69y4wl8p',
           }}
         ></Source>
 
