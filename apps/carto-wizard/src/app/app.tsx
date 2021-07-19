@@ -1,12 +1,19 @@
 import { MapLayerMouseEvent } from 'mapbox-gl';
 import { Component } from 'react';
-import ReactMapboxGl, { Layer, Source } from 'react-mapbox-gl';
+import ReactMapboxGl, {
+  Feature,
+  Layer,
+  Source,
+  ZoomControl,
+} from 'react-mapbox-gl';
+import Sources from './sources/sources';
 
 export class App extends Component {
   private _mapInstance: mapboxgl.Map | null = null;
-  private _hoveredStateId: number | string | undefined = undefined;
+  private _hoveredStateIds: (number | string | undefined)[] = [];
   render() {
     const Map = ReactMapboxGl({
+      antialias: true,
       accessToken:
         'pk.eyJ1IjoiZG9taW5pY2FsaWUiLCJhIjoiY2tuZzJ0YWtvMDcwejJxczlwa2NtbW0zeSJ9.ire3NMM19l7z4Zeqa20RVw',
       dragRotate: false,
@@ -28,15 +35,8 @@ export class App extends Component {
           this._mapInstance = map;
         }}
       >
-        <Source
-          id="countries_source"
-          promoteId="code"
-          tileJsonSource={{
-            type: 'vector',
-            url: 'mapbox://dominicalie.69y4wl8p',
-          }}
-        ></Source>
-
+        <ZoomControl />
+        <Sources />
         <Layer
           type="fill"
           id="countries_fill"
@@ -51,8 +51,8 @@ export class App extends Component {
               0,
             ],
           }}
-          onMouseMove={this.onMouseMove}
-          onMouseLeave={this.onMouseLeave}
+          // onMouseMove={this.onMouseMove}
+          // onMouseLeave={this.onMouseLeave}
         />
         <Layer
           type="line"
@@ -61,10 +61,29 @@ export class App extends Component {
           sourceLayer="countries"
           paint={{
             'line-opacity': 1,
-            'line-color': '#000000',
+            'line-color': '#2a3d45',
             'line-width': 1,
           }}
         />
+
+        <Layer
+          id="regions"
+          sourceId="regions_source"
+          type="symbol"
+          layout={{
+            'text-field': ['get', 'name'],
+            'text-anchor': 'top',
+            'text-size': 48,
+          }}
+          paint={{
+            'text-color': '#661b00',
+            'text-halo-blur': 5,
+            'text-halo-color': '#ffffff',
+            'text-halo-width': 5,
+          }}
+          onMouseMove={this.onRegionMouseMove}
+          onMouseLeave={this.onRegionMouseLeave}
+        ></Layer>
       </Map>
     );
   }
@@ -73,12 +92,11 @@ export class App extends Component {
     if (this._mapInstance && e.features) {
       this._mapInstance.getCanvas().style.cursor = 'pointer';
       if (e.features.length > 0) {
-        if (this._hoveredStateId !== undefined) {
-          this.setFeatureState(this._hoveredStateId, { hover: false });
+        if (this._hoveredStateIds.length) {
+          this.setFeatureState(this._hoveredStateIds, { hover: false });
         }
-        this._hoveredStateId = e.features[0].id;
-        this.setFeatureState(this._hoveredStateId, { hover: true });
-        console.log(e.features);
+        this._hoveredStateIds = [e.features[0].id];
+        this.setFeatureState(this._hoveredStateIds, { hover: true });
       }
     }
   };
@@ -86,21 +104,65 @@ export class App extends Component {
   private onMouseLeave = (e: MapLayerMouseEvent) => {
     if (this._mapInstance) {
       this._mapInstance.getCanvas().style.cursor = '';
-      if (this._hoveredStateId !== undefined) {
-        this.setFeatureState(this._hoveredStateId, { hover: false });
+      if (this._hoveredStateIds.length) {
+        this.setFeatureState(this._hoveredStateIds, { hover: false });
+      }
+      this._hoveredStateIds = [];
+    }
+  };
+
+  private onRegionMouseMove = (e: MapLayerMouseEvent) => {
+    if (this._mapInstance && e.features) {
+      this._mapInstance.getCanvas().style.cursor = 'pointer';
+      if (e.features.length > 0) {
+        if (this._hoveredStateIds.length) {
+          this.setFeatureState(this._hoveredStateIds, { hover: false });
+        }
+
+        const region: string = e.features[0].properties?.name;
+
+        this._hoveredStateIds = this._mapInstance
+          .queryRenderedFeatures(undefined, {
+            layers: ['countries_fill'],
+          })
+          .filter(
+            (f) =>
+              (f.properties?.area as string)
+                .toLowerCase()
+                .indexOf(region.toLowerCase()) >= 0
+          )
+          .map((f) => f.id);
+
+        this.setFeatureState(this._hoveredStateIds, { hover: true });
       }
     }
   };
 
-  private setFeatureState(id: number | string | undefined, properties: any) {
-    this._mapInstance?.setFeatureState(
-      {
-        id,
-        source: 'countries_source',
-        sourceLayer: 'countries',
-      },
-      properties
-    );
+  private onRegionMouseLeave = (e: MapLayerMouseEvent) => {
+    if (this._mapInstance) {
+      this._mapInstance.getCanvas().style.cursor = '';
+      if (this._hoveredStateIds.length) {
+        this.setFeatureState(this._hoveredStateIds, { hover: false });
+      }
+
+      this._hoveredStateIds = [];
+    }
+  };
+
+  private setFeatureState(
+    ids: (number | string | undefined)[],
+    properties: any
+  ) {
+    ids.forEach((id) => {
+      this._mapInstance?.setFeatureState(
+        {
+          id,
+          source: 'countries_source',
+          sourceLayer: 'countries',
+        },
+        properties
+      );
+    });
   }
 }
 
