@@ -40,7 +40,7 @@ export class Sources extends Component<SourcesProps> {
                   type: 'Feature',
                   geometry: {
                     type: 'Point',
-                    coordinates: [-95, 20],
+                    coordinates: [-100, 20],
                   },
                   properties: {
                     label: 'Americas',
@@ -58,12 +58,23 @@ export class Sources extends Component<SourcesProps> {
                     name: 'South America',
                   },
                 },
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-60, 20],
+                  },
+                  properties: {
+                    label: 'Caribbean',
+                    name: 'Caribbean',
+                  },
+                },
 
                 {
                   type: 'Feature',
                   geometry: {
                     type: 'Point',
-                    coordinates: [-10, 50],
+                    coordinates: [0, 50],
                   },
                   properties: {
                     label: 'Europe',
@@ -74,7 +85,7 @@ export class Sources extends Component<SourcesProps> {
                   type: 'Feature',
                   geometry: {
                     type: 'Point',
-                    coordinates: [50, 60],
+                    coordinates: [60, 60],
                   },
                   properties: {
                     label: 'Eastern Europe',
@@ -129,7 +140,7 @@ export class Sources extends Component<SourcesProps> {
                   type: 'Feature',
                   geometry: {
                     type: 'Point',
-                    coordinates: [135, -20],
+                    coordinates: [145, -20],
                   },
                   properties: {
                     label: 'Oceania',

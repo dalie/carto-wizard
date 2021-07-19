@@ -38,6 +38,17 @@ export class App extends Component {
         <ZoomControl />
         <Sources />
         <Layer
+          type="line"
+          id="countries_outline"
+          sourceId="countries_source"
+          sourceLayer="countries"
+          paint={{
+            'line-opacity': 1,
+            'line-color': '#2a3d45',
+            'line-width': 1,
+          }}
+        />
+        {/* <Layer
           type="fill"
           id="countries_fill"
           sourceId="countries_source"
@@ -51,19 +62,8 @@ export class App extends Component {
               0,
             ],
           }}
-          // onMouseMove={this.onMouseMove}
-          // onMouseLeave={this.onMouseLeave}
-        />
-        <Layer
-          type="line"
-          id="countries_outline"
-          sourceId="countries_source"
-          sourceLayer="countries"
-          paint={{
-            'line-opacity': 1,
-            'line-color': '#2a3d45',
-            'line-width': 1,
-          }}
+          onMouseMove={this.onMouseMove}
+          onMouseLeave={this.onMouseLeave}
         />
 
         <Layer
@@ -71,19 +71,20 @@ export class App extends Component {
           sourceId="regions_source"
           type="symbol"
           layout={{
+            'text-font': ['Roboto Black Italic'],
             'text-field': ['get', 'name'],
             'text-anchor': 'top',
             'text-size': 48,
           }}
           paint={{
-            'text-color': '#661b00',
-            'text-halo-blur': 5,
-            'text-halo-color': '#ffffff',
-            'text-halo-width': 5,
+            'text-color': '#ffffff',
+            'text-halo-blur': 2,
+            'text-halo-color': '#222222',
+            'text-halo-width': 3,
           }}
           onMouseMove={this.onRegionMouseMove}
           onMouseLeave={this.onRegionMouseLeave}
-        ></Layer>
+        ></Layer> */}
       </Map>
     );
   }
