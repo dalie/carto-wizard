@@ -21,6 +21,7 @@ export class Sources extends Component<SourcesProps> {
           id="regions_source"
           geoJsonSource={{
             type: 'geojson',
+
             data: {
               type: 'FeatureCollection',
               features: [

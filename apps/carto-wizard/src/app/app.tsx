@@ -1,16 +1,26 @@
 import { MapLayerMouseEvent } from 'mapbox-gl';
 import { Component } from 'react';
-import ReactMapboxGl, {
-  Feature,
-  Layer,
-  Source,
-  ZoomControl,
-} from 'react-mapbox-gl';
+import ReactMapboxGl, { Layer, ZoomControl } from 'react-mapbox-gl';
+import './app.module.scss';
+import Home from './home/home';
 import Sources from './sources/sources';
 
 export class App extends Component {
   private _mapInstance: mapboxgl.Map | null = null;
   private _hoveredStateIds: (number | string | undefined)[] = [];
+
+  state: {
+    showHome: boolean;
+    showRegions: boolean;
+  };
+
+  constructor(props = {}) {
+    super(props);
+    this.state = {
+      showHome: true,
+      showRegions: false,
+    };
+  }
   render() {
     const Map = ReactMapboxGl({
       antialias: true,
@@ -23,71 +33,94 @@ export class App extends Component {
     });
 
     return (
-      <Map
-        center={[20, 20]}
-        zoom={[2]}
-        style="mapbox://styles/dominicalie/ckqzmhgmw3h9717uo5z4zvuiz"
-        containerStyle={{
-          height: '100vh',
-          width: '100vw',
-        }}
-        onSourceData={(map) => {
-          this._mapInstance = map;
-        }}
-      >
-        <ZoomControl />
-        <Sources />
-        <Layer
-          type="line"
-          id="countries_outline"
-          sourceId="countries_source"
-          sourceLayer="countries"
-          paint={{
-            'line-opacity': 1,
-            'line-color': '#2a3d45',
-            'line-width': 1,
+      <>
+        {this.state.showHome && (
+          <Home
+            onSelectRegion={this.onHomeSelectRegion}
+            onSelectWorld={this.onHomeSelectWorld}
+          ></Home>
+        )}
+        <Map
+          center={[20, 20]}
+          zoom={[2]}
+          // eslint-disable-next-line react/style-prop-object
+          style="mapbox://styles/dominicalie/ckqzmhgmw3h9717uo5z4zvuiz"
+          containerStyle={{
+            height: '100vh',
+            width: '100vw',
           }}
-        />
-        {/* <Layer
-          type="fill"
-          id="countries_fill"
-          sourceId="countries_source"
-          sourceLayer="countries"
-          paint={{
-            'fill-color': '#000000',
-            'fill-opacity': [
-              'case',
-              ['boolean', ['feature-state', 'hover'], false],
-              0.75,
-              0,
-            ],
+          onSourceData={(map) => {
+            this._mapInstance = map;
           }}
-          onMouseMove={this.onMouseMove}
-          onMouseLeave={this.onMouseLeave}
-        />
+        >
+          <ZoomControl />
+          <Sources />
+          <Layer
+            type="line"
+            id="countries_outline"
+            sourceId="countries_source"
+            sourceLayer="countries"
+            paint={{
+              'line-opacity': 1,
+              'line-color': '#2a3d45',
+              'line-width': 1,
+            }}
+          />
 
-        <Layer
-          id="regions"
-          sourceId="regions_source"
-          type="symbol"
-          layout={{
-            'text-font': ['Roboto Black Italic'],
-            'text-field': ['get', 'name'],
-            'text-anchor': 'top',
-            'text-size': 48,
-          }}
-          paint={{
-            'text-color': '#ffffff',
-            'text-halo-blur': 2,
-            'text-halo-color': '#222222',
-            'text-halo-width': 3,
-          }}
-          onMouseMove={this.onRegionMouseMove}
-          onMouseLeave={this.onRegionMouseLeave}
-        ></Layer> */}
-      </Map>
+          <Layer
+            type="fill"
+            id="countries_fill"
+            sourceId="countries_source"
+            sourceLayer="countries"
+            paint={{
+              'fill-color': '#000000',
+              'fill-opacity': [
+                'case',
+                ['boolean', ['feature-state', 'hover'], false],
+                0.75,
+                0,
+              ],
+            }}
+          />
+
+          {this.state.showRegions && (
+            <Layer
+              id="regions"
+              sourceId="regions_source"
+              type="symbol"
+              layout={{
+                'text-font': ['Roboto Black Italic'],
+                'text-field': ['get', 'name'],
+                'text-anchor': 'top',
+                'text-size': 48,
+              }}
+              paint={{
+                'text-color': '#ffffff',
+                'text-halo-blur': 2,
+                'text-halo-color': '#222222',
+                'text-halo-width': 3,
+              }}
+              onMouseMove={this.onRegionMouseMove}
+              onMouseLeave={this.onRegionMouseLeave}
+            ></Layer>
+          )}
+          {/*
+
+        */}
+        </Map>
+      </>
     );
   }
+
+  private onHomeSelectRegion = () => {
+    this.setState({ showHome: false, showRegions: true });
+    console.log('Select Region');
+  };
+
+  private onHomeSelectWorld = () => {
+    this.setState({ showHome: false });
+    console.log('Select World');
+  };
 
   private onMouseMove = (e: MapLayerMouseEvent) => {
     if (this._mapInstance && e.features) {
