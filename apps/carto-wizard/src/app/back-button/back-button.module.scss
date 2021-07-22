@@ -1,0 +1,22 @@
+@import '../../styles.scss';
+
+.container {
+  position: absolute;
+  z-index: 2000;
+
+  button {
+    cursor: pointer;
+    border: 2px solid black;
+    margin: 1em;
+    background-color: rgb(211, 211, 211);
+    font-size: 12px;
+    padding: 1em;
+    font-style: italic;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 900;
+    min-width: 150px;
+    box-shadow: 5px 5px 20px;
+    transform: translate(0px, 0px);
+    transition: box-shadow 0.1s, transform 0.1s;
+  }
+}

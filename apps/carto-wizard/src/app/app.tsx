@@ -2,14 +2,25 @@ import { MapLayerMouseEvent } from 'mapbox-gl';
 import { Component } from 'react';
 import ReactMapboxGl, { Layer, ZoomControl } from 'react-mapbox-gl';
 import './app.module.scss';
+import BackButton from './back-button/back-button';
 import Home from './home/home';
 import Sources from './sources/sources';
 
 export class App extends Component {
   private _mapInstance: mapboxgl.Map | null = null;
   private _hoveredStateIds: (number | string | undefined)[] = [];
-
+  private _mapComponent = ReactMapboxGl({
+    antialias: true,
+    accessToken:
+      'pk.eyJ1IjoiZG9taW5pY2FsaWUiLCJhIjoiY2tuZzJ0YWtvMDcwejJxczlwa2NtbW0zeSJ9.ire3NMM19l7z4Zeqa20RVw',
+    dragRotate: false,
+    minZoom: 2,
+    maxZoom: 11,
+    renderWorldCopies: true,
+  });
   state: {
+    showBack: boolean;
+    backState: any;
     showHome: boolean;
     showRegions: boolean;
   };
@@ -17,30 +28,49 @@ export class App extends Component {
   constructor(props = {}) {
     super(props);
     this.state = {
+      backState: null,
+      showBack: false,
       showHome: true,
       showRegions: false,
     };
   }
   render() {
-    const Map = ReactMapboxGl({
-      antialias: true,
-      accessToken:
-        'pk.eyJ1IjoiZG9taW5pY2FsaWUiLCJhIjoiY2tuZzJ0YWtvMDcwejJxczlwa2NtbW0zeSJ9.ire3NMM19l7z4Zeqa20RVw',
-      dragRotate: false,
-      minZoom: 2,
-      maxZoom: 11,
-      renderWorldCopies: true,
-    });
-
+    let regions;
+    if (this.state.showRegions) {
+      regions = (
+        <Layer
+          id="regions"
+          sourceId="regions_source"
+          type="symbol"
+          layout={{
+            'text-font': ['Roboto Black Italic'],
+            'text-field': ['get', 'name'],
+            'text-anchor': 'top',
+            'text-size': 48,
+          }}
+          paint={{
+            'text-color': '#ffffff',
+            'text-halo-blur': 2,
+            'text-halo-color': '#222222',
+            'text-halo-width': 3,
+          }}
+          onMouseMove={this.onRegionMouseMove}
+          onMouseLeave={this.onRegionMouseLeave}
+        ></Layer>
+      );
+    }
     return (
       <>
+        {this.state.showBack && (
+          <BackButton onClickBack={this.onClickBack}></BackButton>
+        )}
         {this.state.showHome && (
           <Home
             onSelectRegion={this.onHomeSelectRegion}
             onSelectWorld={this.onHomeSelectWorld}
           ></Home>
         )}
-        <Map
+        <this._mapComponent
           center={[20, 20]}
           zoom={[2]}
           // eslint-disable-next-line react/style-prop-object
@@ -83,42 +113,44 @@ export class App extends Component {
             }}
           />
 
-          {this.state.showRegions && (
-            <Layer
-              id="regions"
-              sourceId="regions_source"
-              type="symbol"
-              layout={{
-                'text-font': ['Roboto Black Italic'],
-                'text-field': ['get', 'name'],
-                'text-anchor': 'top',
-                'text-size': 48,
-              }}
-              paint={{
-                'text-color': '#ffffff',
-                'text-halo-blur': 2,
-                'text-halo-color': '#222222',
-                'text-halo-width': 3,
-              }}
-              onMouseMove={this.onRegionMouseMove}
-              onMouseLeave={this.onRegionMouseLeave}
-            ></Layer>
-          )}
-          {/*
-
-        */}
-        </Map>
+          {regions}
+        </this._mapComponent>
       </>
     );
   }
 
+  private onClickBack = () => {
+    console.log('back');
+    this.setState(this.state.backState);
+  };
+
   private onHomeSelectRegion = () => {
-    this.setState({ showHome: false, showRegions: true });
+    this.setState({
+      showHome: false,
+      showRegions: true,
+      showBack: true,
+      backState: {
+        showHome: true,
+        showRegions: false,
+        showBack: false,
+        backState: null,
+      },
+    });
     console.log('Select Region');
   };
 
   private onHomeSelectWorld = () => {
-    this.setState({ showHome: false });
+    this.setState({
+      showHome: false,
+      showRegions: false,
+      showBack: true,
+      backState: {
+        showHome: true,
+        showRegions: false,
+        showBack: false,
+        backState: null,
+      },
+    });
     console.log('Select World');
   };
 
