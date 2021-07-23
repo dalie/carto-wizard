@@ -1,12 +1,22 @@
-import { MapLayerMouseEvent } from 'mapbox-gl';
+import { MapboxGeoJSONFeature, MapLayerMouseEvent } from 'mapbox-gl';
 import { Component } from 'react';
 import ReactMapboxGl, { Layer, ZoomControl } from 'react-mapbox-gl';
 import './app.module.scss';
 import BackButton from './back-button/back-button';
 import Home from './home/home';
+import LevelSelect from './level-select/level-select';
 import Sources from './sources/sources';
 
-export class App extends Component {
+interface ComponentState {
+  features?: MapboxGeoJSONFeature[];
+  backState?: ComponentState;
+  showBack?: boolean;
+  showHome?: boolean;
+  showLevelSelect?: boolean;
+  showRegions?: boolean;
+}
+
+export class App extends Component<unknown, ComponentState | undefined> {
   private _mapInstance: mapboxgl.Map | null = null;
   private _hoveredStateIds: (number | string | undefined)[] = [];
   private _mapComponent = ReactMapboxGl({
@@ -18,24 +28,22 @@ export class App extends Component {
     maxZoom: 11,
     renderWorldCopies: true,
   });
-  state: {
-    showBack: boolean;
-    backState: any;
-    showHome: boolean;
-    showRegions: boolean;
-  };
+
+  state: ComponentState;
 
   constructor(props = {}) {
     super(props);
     this.state = {
-      backState: null,
-      showBack: false,
       showHome: true,
-      showRegions: false,
     };
   }
   render() {
+    let levelSelect;
     let regions;
+
+    if (this.state.showLevelSelect) {
+      levelSelect = <LevelSelect features={this.state.features}></LevelSelect>;
+    }
     if (this.state.showRegions) {
       regions = (
         <Layer
@@ -54,6 +62,7 @@ export class App extends Component {
             'text-halo-color': '#222222',
             'text-halo-width': 3,
           }}
+          onClick={this.onRegionMouseClick}
           onMouseMove={this.onRegionMouseMove}
           onMouseLeave={this.onRegionMouseLeave}
         ></Layer>
@@ -112,7 +121,7 @@ export class App extends Component {
               ],
             }}
           />
-
+          {levelSelect}
           {regions}
         </this._mapComponent>
       </>
@@ -144,10 +153,12 @@ export class App extends Component {
       showHome: false,
       showRegions: false,
       showBack: true,
+      showLevelSelect: true,
       backState: {
         showHome: true,
         showRegions: false,
         showBack: false,
+        showLevelSelect: false,
         backState: null,
       },
     });
@@ -212,6 +223,39 @@ export class App extends Component {
       }
 
       this._hoveredStateIds = [];
+    }
+  };
+
+  private onRegionMouseClick = (e: MapLayerMouseEvent) => {
+    if (this._mapInstance && e.features) {
+      if (e.features.length > 0) {
+        const region: string = e.features[0].properties?.name;
+
+        const features = this._mapInstance
+          .queryRenderedFeatures(undefined, {
+            layers: ['countries_fill'],
+          })
+          .filter(
+            (f) =>
+              (f.properties?.area as string)
+                .toLowerCase()
+                .indexOf(region.toLowerCase()) >= 0
+          );
+
+        this.setState({
+          features,
+          showLevelSelect: true,
+          showRegions: false,
+          backState: {
+            features: [],
+            showBack: true,
+            showLevelSelect: false,
+            showRegions: true,
+          },
+        });
+
+        this.onRegionMouseLeave(e);
+      }
     }
   };
 

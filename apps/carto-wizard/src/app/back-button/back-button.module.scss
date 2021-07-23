@@ -2,7 +2,7 @@
 
 .container {
   position: absolute;
-  z-index: 2000;
+  z-index: 2001;
 
   button {
     cursor: pointer;
@@ -18,5 +18,10 @@
     box-shadow: 5px 5px 20px;
     transform: translate(0px, 0px);
     transition: box-shadow 0.1s, transform 0.1s;
+
+    &:active {
+      background-color: black;
+      color: rgb(211, 211, 211);
+    }
   }
 }

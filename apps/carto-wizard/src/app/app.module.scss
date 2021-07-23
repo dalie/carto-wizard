@@ -1,1 +1,8 @@
-
+.ui {
+  position: absolute;
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(#ffffff, 0.75);
+  z-index: 2000;
+}

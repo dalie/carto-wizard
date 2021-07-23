@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import styles from './home.module.scss';
+import appStyles from '../app.module.scss';
 
 /* eslint-disable-next-line */
 export interface HomeProps {
@@ -10,7 +11,7 @@ export interface HomeProps {
 export class Home extends Component<HomeProps> {
   render() {
     return (
-      <div className={styles.ui}>
+      <div className={appStyles.ui}>
         <div className={styles.menu}>
           <h1>CartoWizard</h1>
           <button className={styles.button} onClick={this.props.onSelectWorld}>
