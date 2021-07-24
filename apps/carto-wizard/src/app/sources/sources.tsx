@@ -34,6 +34,7 @@ export class Sources extends Component<SourcesProps> {
                   properties: {
                     label: 'North America',
                     name: 'North America',
+                    wikiLink: 'North_America',
                   },
                 },
 
@@ -46,6 +47,7 @@ export class Sources extends Component<SourcesProps> {
                   properties: {
                     label: 'Americas',
                     name: 'America',
+                    wikiLink: 'Americas',
                   },
                 },
                 {
@@ -57,6 +59,7 @@ export class Sources extends Component<SourcesProps> {
                   properties: {
                     label: 'South America',
                     name: 'South America',
+                    wikiLink: 'South_America',
                   },
                 },
                 {
@@ -68,6 +71,7 @@ export class Sources extends Component<SourcesProps> {
                   properties: {
                     label: 'Caribbean',
                     name: 'Caribbean',
+                    wikiLink: 'Caribbean',
                   },
                 },
 
@@ -80,6 +84,7 @@ export class Sources extends Component<SourcesProps> {
                   properties: {
                     label: 'Europe',
                     name: 'Europe',
+                    wikiLink: 'Europe',
                   },
                 },
                 {
@@ -91,6 +96,7 @@ export class Sources extends Component<SourcesProps> {
                   properties: {
                     label: 'Eastern Europe',
                     name: 'Eastern Europe',
+                    wikiLink: 'Eastern_Europe',
                   },
                 },
                 {
@@ -102,6 +108,7 @@ export class Sources extends Component<SourcesProps> {
                   properties: {
                     label: 'Africa',
                     name: 'Africa',
+                    wikiLink: 'Africa',
                   },
                 },
                 {
@@ -113,6 +120,7 @@ export class Sources extends Component<SourcesProps> {
                   properties: {
                     label: 'Middle East',
                     name: 'Middle East',
+                    wikiLink: 'Middle_East',
                   },
                 },
                 {
@@ -124,6 +132,7 @@ export class Sources extends Component<SourcesProps> {
                   properties: {
                     label: 'Asia',
                     name: 'Asia',
+                    wikiLink: 'Asia',
                   },
                 },
                 {
@@ -135,6 +144,7 @@ export class Sources extends Component<SourcesProps> {
                   properties: {
                     label: 'Southeast Asia',
                     name: 'Southeast Asia',
+                    wikiLink: 'Southeast_Asia',
                   },
                 },
                 {
@@ -146,6 +156,7 @@ export class Sources extends Component<SourcesProps> {
                   properties: {
                     label: 'Oceania',
                     name: 'Oceania',
+                    wikiLink: 'Oceania',
                   },
                 },
               ],

@@ -2,21 +2,13 @@ import { MapboxGeoJSONFeature, MapLayerMouseEvent } from 'mapbox-gl';
 import { Component } from 'react';
 import ReactMapboxGl, { Layer, ZoomControl } from 'react-mapbox-gl';
 import './app.module.scss';
+import { AppState, states } from './app.state';
 import BackButton from './back-button/back-button';
 import Home from './home/home';
 import LevelSelect from './level-select/level-select';
 import Sources from './sources/sources';
 
-interface ComponentState {
-  features?: MapboxGeoJSONFeature[];
-  backState?: ComponentState;
-  showBack?: boolean;
-  showHome?: boolean;
-  showLevelSelect?: boolean;
-  showRegions?: boolean;
-}
-
-export class App extends Component<unknown, ComponentState | undefined> {
+export class App extends Component<unknown, AppState | undefined> {
   private _mapInstance: mapboxgl.Map | null = null;
   private _hoveredStateIds: (number | string | undefined)[] = [];
   private _mapComponent = ReactMapboxGl({
@@ -29,20 +21,23 @@ export class App extends Component<unknown, ComponentState | undefined> {
     renderWorldCopies: true,
   });
 
-  state: ComponentState;
+  state: AppState;
 
   constructor(props = {}) {
     super(props);
-    this.state = {
-      showHome: true,
-    };
+    this.state = states['home'];
   }
   render() {
     let levelSelect;
     let regions;
 
     if (this.state.showLevelSelect) {
-      levelSelect = <LevelSelect features={this.state.features}></LevelSelect>;
+      levelSelect = (
+        <LevelSelect
+          features={this.state.features}
+          wiki={this.state.wiki}
+        ></LevelSelect>
+      );
     }
     if (this.state.showRegions) {
       regions = (
@@ -129,40 +124,35 @@ export class App extends Component<unknown, ComponentState | undefined> {
   }
 
   private onClickBack = () => {
-    console.log('back');
-    this.setState(this.state.backState);
+    if (this.state.backState) {
+      this.setState(states[this.state.backState]);
+    }
   };
 
   private onHomeSelectRegion = () => {
-    this.setState({
-      showHome: false,
-      showRegions: true,
-      showBack: true,
-      backState: {
-        showHome: true,
-        showRegions: false,
-        showBack: false,
-        backState: null,
-      },
-    });
-    console.log('Select Region');
+    this.setState(states['regions']);
   };
 
   private onHomeSelectWorld = () => {
-    this.setState({
-      showHome: false,
-      showRegions: false,
-      showBack: true,
-      showLevelSelect: true,
-      backState: {
-        showHome: true,
-        showRegions: false,
-        showBack: false,
-        showLevelSelect: false,
-        backState: null,
-      },
+    const features = this._mapInstance?.queryRenderedFeatures(undefined, {
+      layers: ['countries_fill'],
     });
-    console.log('Select World');
+    const req = new XMLHttpRequest();
+    req.overrideMimeType('application/json');
+    req.open('GET', 'https://en.wikipedia.org/api/rest_v1/page/summary/Earth');
+    req.onload = () => {
+      this.setState({
+        wiki: JSON.parse(req.responseText),
+      });
+    };
+    req.send();
+
+    this.setState({
+      features,
+      backState: 'home',
+    });
+
+    this.setState(states['levelSelect']);
   };
 
   private onMouseMove = (e: MapLayerMouseEvent) => {
@@ -231,6 +221,21 @@ export class App extends Component<unknown, ComponentState | undefined> {
       if (e.features.length > 0) {
         const region: string = e.features[0].properties?.name;
 
+        const req = new XMLHttpRequest();
+        req.overrideMimeType('application/json');
+        req.open(
+          'GET',
+          'https://en.wikipedia.org/api/rest_v1/page/summary/' +
+            e.features[0].properties?.wikiLink
+        );
+        req.onload = () => {
+          this.setState({
+            wiki: JSON.parse(req.responseText),
+          });
+        };
+
+        req.send();
+
         const features = this._mapInstance
           .queryRenderedFeatures(undefined, {
             layers: ['countries_fill'],
@@ -244,15 +249,10 @@ export class App extends Component<unknown, ComponentState | undefined> {
 
         this.setState({
           features,
-          showLevelSelect: true,
-          showRegions: false,
-          backState: {
-            features: [],
-            showBack: true,
-            showLevelSelect: false,
-            showRegions: true,
-          },
+          backState: 'regions',
         });
+
+        this.setState(states['levelSelect']);
 
         this.onRegionMouseLeave(e);
       }
