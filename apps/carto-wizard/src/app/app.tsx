@@ -6,10 +6,12 @@ import { AppState, states } from './app.state';
 import BackButton from './back-button/back-button';
 import Home from './home/home';
 import LevelSelect from './level-select/level-select';
+import { LevelType } from './level-select/level-select.models';
+import { Level } from './level/level';
 import Sources from './sources/sources';
 
 export class App extends Component<unknown, AppState | undefined> {
-  private _mapInstance: mapboxgl.Map | null = null;
+  private _mapInstance: mapboxgl.Map | undefined = undefined;
   private _hoveredStateIds: (number | string | undefined)[] = [];
   private _mapComponent = ReactMapboxGl({
     antialias: true,
@@ -28,14 +30,25 @@ export class App extends Component<unknown, AppState | undefined> {
     this.state = states['home'];
   }
   render() {
+    let level;
     let levelSelect;
     let regions;
 
+    if (this.state.showLevel) {
+      level = (
+        <Level
+          features={this.state.features ?? []}
+          map={this._mapInstance}
+          type={this.state.levelType}
+        ></Level>
+      );
+    }
     if (this.state.showLevelSelect) {
       levelSelect = (
         <LevelSelect
           features={this.state.features}
           wiki={this.state.wiki}
+          onLevelSelect={this.onLevelSelect}
         ></LevelSelect>
       );
     }
@@ -100,7 +113,6 @@ export class App extends Component<unknown, AppState | undefined> {
               'line-width': 1,
             }}
           />
-
           <Layer
             type="fill"
             id="countries_fill"
@@ -116,6 +128,7 @@ export class App extends Component<unknown, AppState | undefined> {
               ],
             }}
           />
+          {level}
           {levelSelect}
           {regions}
         </this._mapComponent>
@@ -137,6 +150,7 @@ export class App extends Component<unknown, AppState | undefined> {
     const features = this._mapInstance?.queryRenderedFeatures(undefined, {
       layers: ['countries_fill'],
     });
+
     const req = new XMLHttpRequest();
     req.overrideMimeType('application/json');
     req.open('GET', 'https://en.wikipedia.org/api/rest_v1/page/summary/Earth');
@@ -155,27 +169,12 @@ export class App extends Component<unknown, AppState | undefined> {
     this.setState(states['levelSelect']);
   };
 
-  private onMouseMove = (e: MapLayerMouseEvent) => {
-    if (this._mapInstance && e.features) {
-      this._mapInstance.getCanvas().style.cursor = 'pointer';
-      if (e.features.length > 0) {
-        if (this._hoveredStateIds.length) {
-          this.setFeatureState(this._hoveredStateIds, { hover: false });
-        }
-        this._hoveredStateIds = [e.features[0].id];
-        this.setFeatureState(this._hoveredStateIds, { hover: true });
-      }
-    }
-  };
+  private onLevelSelect = (type: LevelType) => {
+    this.setState({
+      levelType: type,
+    });
 
-  private onMouseLeave = (e: MapLayerMouseEvent) => {
-    if (this._mapInstance) {
-      this._mapInstance.getCanvas().style.cursor = '';
-      if (this._hoveredStateIds.length) {
-        this.setFeatureState(this._hoveredStateIds, { hover: false });
-      }
-      this._hoveredStateIds = [];
-    }
+    this.setState(states['level']);
   };
 
   private onRegionMouseMove = (e: MapLayerMouseEvent) => {
@@ -189,7 +188,7 @@ export class App extends Component<unknown, AppState | undefined> {
         const region: string = e.features[0].properties?.name;
 
         this._hoveredStateIds = this._mapInstance
-          .queryRenderedFeatures(undefined, {
+          ?.queryRenderedFeatures(undefined, {
             layers: ['countries_fill'],
           })
           .filter(

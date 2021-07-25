@@ -20,10 +20,19 @@
   }
 }
 .modes {
+  max-width: 900px;
+  margin: auto;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   .mode {
     width: 350px;
+    margin: 50px;
+    > div {
+      padding: 1em;
+      background-color: white;
+      box-shadow: 5px 5px 20px black;
+    }
   }
 }
