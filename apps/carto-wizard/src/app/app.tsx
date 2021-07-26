@@ -128,6 +128,26 @@ export class App extends Component<unknown, AppState | undefined> {
               ],
             }}
           />
+          <Layer
+            type="fill"
+            id="countries_fill_guess"
+            sourceId="countries_source"
+            sourceLayer="countries"
+            paint={{
+              'fill-color': [
+                'case',
+                ['boolean', ['feature-state', 'correct'], false],
+                '#6eeb83',
+                '#f05365',
+              ],
+              'fill-opacity': [
+                'case',
+                ['boolean', ['feature-state', 'guessed'], false],
+                0.75,
+                0,
+              ],
+            }}
+          />
           {level}
           {levelSelect}
           {regions}

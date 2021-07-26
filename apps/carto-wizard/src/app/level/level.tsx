@@ -2,7 +2,10 @@ import { Map, MapboxGeoJSONFeature, MapLayerMouseEvent } from 'mapbox-gl';
 import { Component } from 'react';
 import { LevelType } from '../level-select/level-select.models';
 
-import './level.module.scss';
+import styles from './level.module.scss';
+import appStyles from '../app.module.scss';
+import homeStyles from '../home/home.module.scss';
+
 import { LevelState } from './level.state';
 
 /* eslint-disable-next-line */
@@ -12,7 +15,7 @@ export interface LevelProps {
   map: Map | undefined;
 }
 
-export class Level extends Component<LevelProps> {
+export class Level extends Component<LevelProps, LevelState> {
   private _hoveredStateIds: (number | string | undefined)[] = [];
   private _registeredListeners = false;
 
@@ -28,6 +31,7 @@ export class Level extends Component<LevelProps> {
             .sort((a, b) => a.sort - b.sort)
             .map((a) => a.value)
         : [],
+      showStart: true,
     };
   }
   componentWillUnmount() {
@@ -46,15 +50,84 @@ export class Level extends Component<LevelProps> {
       this._registeredListeners = true;
     }
 
+    let start;
+    if (this.state.showStart) {
+      start = (
+        <div className={appStyles.ui}>
+          <button className={homeStyles.button} onClick={this.onStart}>
+            Start
+          </button>
+        </div>
+      );
+    }
+
+    let currentFeature;
+    if (
+      this.state.showCurrentFeature &&
+      this.state.currentFeature?.properties
+    ) {
+      currentFeature = (
+        <div className={styles.currentFeature}>
+          <img
+            src={`assets/flags/${this.state.currentFeature.properties.code}.png`}
+            alt={this.state.currentFeature.properties.name}
+          />
+          {this.state.currentFeature.properties.name}
+        </div>
+      );
+    }
+
     return (
-      <div>
-        <p>Welcome to level!</p>
-      </div>
+      <>
+        {start}
+        {currentFeature}
+      </>
     );
   }
 
+  private onStart = () => {
+    this.setState({
+      currentFeature: this.state.features[0],
+      showStart: false,
+      showCurrentFeature: true,
+    });
+  };
+
   private onMouseClick = (e: MapLayerMouseEvent) => {
-    console.log(e.features ? e.features[0].properties?.name : '');
+    if (
+      this.props.map &&
+      this.state.currentFeature &&
+      e.features?.length &&
+      e.features.length > 0
+    ) {
+      if (this.state.currentFeature.id === e.features[0].id) {
+        this.setFeatureState([this.state.currentFeature.id], {
+          guessed: true,
+          correct: true,
+        });
+
+        this._hoveredStateIds = [];
+      } else {
+        this.setFeatureState([this.state.currentFeature.id], {
+          guessed: true,
+          wrong: true,
+        });
+      }
+
+      const currentCode = this.state.currentFeature.properties?.code;
+      const features = this.state.features.filter(
+        (f) => f.properties?.code !== currentCode
+      );
+
+      if (features.length > 0) {
+        this.setState({
+          features,
+          currentFeature: features[0],
+        });
+      } else {
+        //finished
+      }
+    }
   };
 
   private onMouseMove = (e: MapLayerMouseEvent) => {
@@ -64,8 +137,10 @@ export class Level extends Component<LevelProps> {
         if (this._hoveredStateIds.length) {
           this.setFeatureState(this._hoveredStateIds, { hover: false });
         }
-        this._hoveredStateIds = [e.features[0].id];
-        this.setFeatureState(this._hoveredStateIds, { hover: true });
+        if (!(e.features[0].state.correct || e.features[0].state.wrong)) {
+          this._hoveredStateIds = [e.features[0].id];
+          this.setFeatureState(this._hoveredStateIds, { hover: true });
+        }
       }
     }
   };

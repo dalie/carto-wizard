@@ -1,0 +1,23 @@
+.currentFeature {
+  position: absolute;
+  z-index: 2001;
+  left: 50%;
+  transform: translate(-50%, 0);
+  background-color: white;
+  margin-top: 12px;
+  padding: 0.5em;
+  font-size: 48px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 900;
+
+  display: flex;
+  align-items: center;
+  box-shadow: 5px 5px 20px black;
+  border: 2px solid black;
+
+  img {
+    height: 1em;
+    box-shadow: 0 0 5px black;
+    margin-right: 1em;
+  }
+}
