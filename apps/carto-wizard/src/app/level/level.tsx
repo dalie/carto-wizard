@@ -3,6 +3,7 @@ import { Component } from 'react';
 import { LevelType } from '../level-select/level-select.models';
 
 import './level.module.scss';
+import { LevelState } from './level.state';
 
 /* eslint-disable-next-line */
 export interface LevelProps {
@@ -15,6 +16,20 @@ export class Level extends Component<LevelProps> {
   private _hoveredStateIds: (number | string | undefined)[] = [];
   private _registeredListeners = false;
 
+  state: LevelState;
+
+  constructor(props: LevelProps) {
+    super(props);
+
+    this.state = {
+      features: props.features
+        ? props.features
+            .map((a) => ({ sort: Math.random(), value: a }))
+            .sort((a, b) => a.sort - b.sort)
+            .map((a) => a.value)
+        : [],
+    };
+  }
   componentWillUnmount() {
     if (this._registeredListeners) {
       this.props?.map?.off('mousemove', 'countries_fill', this.onMouseMove);
