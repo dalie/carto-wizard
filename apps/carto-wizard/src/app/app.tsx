@@ -143,6 +143,21 @@ export class App extends Component<unknown, AppState | undefined> {
               'fill-opacity': [
                 'case',
                 ['boolean', ['feature-state', 'guessed'], false],
+                0.5,
+                0,
+              ],
+            }}
+          />
+          <Layer
+            type="fill"
+            id="countries_fill_disabled"
+            sourceId="countries_source"
+            sourceLayer="countries"
+            paint={{
+              'fill-color': '#ffffff',
+              'fill-opacity': [
+                'case',
+                ['boolean', ['feature-state', 'disabled'], false],
                 0.75,
                 0,
               ],

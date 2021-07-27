@@ -1,4 +1,10 @@
-import { Map, MapboxGeoJSONFeature, MapLayerMouseEvent } from 'mapbox-gl';
+import {
+  GeoJSONSource,
+  LngLatBounds,
+  Map,
+  MapboxGeoJSONFeature,
+  MapLayerMouseEvent,
+} from 'mapbox-gl';
 import { Component } from 'react';
 import { LevelType } from '../level-select/level-select.models';
 
@@ -7,6 +13,8 @@ import appStyles from '../app.module.scss';
 import homeStyles from '../home/home.module.scss';
 
 import { LevelState } from './level.state';
+import { MultiPolygon, Polygon } from 'geojson';
+import bbox from '@turf/bbox';
 
 /* eslint-disable-next-line */
 export interface LevelProps {
@@ -35,10 +43,16 @@ export class Level extends Component<LevelProps, LevelState> {
     };
   }
   componentWillUnmount() {
+    this.props?.map?.removeFeatureState({
+      source: 'countries_source',
+      sourceLayer: 'countries',
+    });
+
     if (this._registeredListeners) {
       this.props?.map?.off('mousemove', 'countries_fill', this.onMouseMove);
       this.props?.map?.off('mouseleave', 'countries_fill', this.onMouseLeave);
       this.props?.map?.off('click', 'countries_fill', this.onMouseClick);
+      this.props?.map?.setFilter('countries_fill', null);
     }
   }
 
@@ -48,6 +62,17 @@ export class Level extends Component<LevelProps, LevelState> {
       this.props?.map?.on('mouseleave', 'countries_fill', this.onMouseLeave);
       this.props?.map?.on('click', 'countries_fill', this.onMouseClick);
       this._registeredListeners = true;
+      const codes = this.state.features.map((f) => f.properties?.code);
+      this.props.map.setFilter('countries_fill', ['in', 'code', ...codes]);
+
+      const allBounds = new LngLatBounds();
+      this.state.features.forEach((f) =>
+        allBounds.extend(new LngLatBounds(bbox(f.geometry) as any))
+      );
+
+      this.props.map.fitBounds(allBounds, {
+        padding: 100,
+      });
     }
 
     let start;
@@ -102,6 +127,7 @@ export class Level extends Component<LevelProps, LevelState> {
     ) {
       if (this.state.currentFeature.id === e.features[0].id) {
         this.setFeatureState([this.state.currentFeature.id], {
+          hover: false,
           guessed: true,
           correct: true,
         });
@@ -109,6 +135,7 @@ export class Level extends Component<LevelProps, LevelState> {
         this._hoveredStateIds = [];
       } else {
         this.setFeatureState([this.state.currentFeature.id], {
+          hover: false,
           guessed: true,
           wrong: true,
         });
