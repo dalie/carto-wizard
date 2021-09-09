@@ -1,0 +1,26 @@
+.currentFeature {
+  background-color: white;
+  padding: 0.5em;
+  font-size: 48px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 900;
+
+  display: flex;
+  align-items: center;
+  box-shadow: 5px 5px 20px black;
+  border: 2px solid black;
+
+  span.name {
+    margin-left: 0.5em;
+  }
+
+  img.flag {
+    height: 1em;
+    box-shadow: 0 0 5px black;
+  }
+
+  img.wiki {
+    margin-left: 0.5em;
+    height: 0.5em;
+  }
+}

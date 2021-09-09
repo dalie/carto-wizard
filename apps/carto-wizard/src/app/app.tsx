@@ -1,4 +1,4 @@
-import { MapboxGeoJSONFeature, MapLayerMouseEvent } from 'mapbox-gl';
+import { MapLayerMouseEvent } from 'mapbox-gl';
 import { Component } from 'react';
 import ReactMapboxGl, { Layer, ZoomControl } from 'react-mapbox-gl';
 import './app.module.scss';
@@ -47,7 +47,7 @@ export class App extends Component<unknown, AppState | undefined> {
       levelSelect = (
         <LevelSelect
           features={this.state.features}
-          wiki={this.state.wiki}
+          region={this.state.selectedRegion}
           onLevelSelect={this.onLevelSelect}
         ></LevelSelect>
       );
@@ -255,35 +255,25 @@ export class App extends Component<unknown, AppState | undefined> {
       if (e.features.length > 0) {
         const region: string = e.features[0].properties?.name;
 
-        const req = new XMLHttpRequest();
-        req.overrideMimeType('application/json');
-        req.open(
-          'GET',
-          'https://en.wikipedia.org/api/rest_v1/page/summary/' +
-            e.features[0].properties?.wikiLink
-        );
-        req.onload = () => {
-          this.setState({
-            wiki: JSON.parse(req.responseText),
-          });
-        };
-
-        req.send();
-
         const features = this._mapInstance
-          .queryRenderedFeatures(undefined, {
-            layers: ['countries_fill'],
+          .querySourceFeatures('countries_source', {
+            sourceLayer: 'countries',
           })
           .filter(
             (f) =>
               (f.properties?.area as string)
                 .toLowerCase()
                 .indexOf(region.toLowerCase()) >= 0
+          )
+          .filter(
+            (feature, index, self) =>
+              index === self.findIndex((f) => f.id === feature.id)
           );
 
         this.setState({
           features,
           backState: 'regions',
+          selectedRegion: region,
         });
 
         this.setState(states['levelSelect']);

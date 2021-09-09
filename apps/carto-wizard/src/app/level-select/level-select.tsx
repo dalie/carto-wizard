@@ -1,15 +1,14 @@
-import { Component } from 'react';
-import styles from './level-select.module.scss';
-import homeStyles from '../home/home.module.scss';
-import appStyles from '../app.module.scss';
 import { MapboxGeoJSONFeature } from 'mapbox-gl';
-import { WikiResponse } from '../app.state';
+import { Component } from 'react';
+import appStyles from '../app.module.scss';
+import homeStyles from '../home/home.module.scss';
 import { LevelType } from './level-select.models';
+import styles from './level-select.module.scss';
 
 /* eslint-disable-next-line */
 export interface LevelSelectProps {
+  region?: string;
   features: MapboxGeoJSONFeature[] | undefined;
-  wiki: WikiResponse | undefined;
   onLevelSelect: (level: LevelType) => void;
 }
 
@@ -18,20 +17,7 @@ export class LevelSelect extends Component<LevelSelectProps> {
     return (
       <div className={appStyles.ui}>
         <div className={styles.container}>
-          <div className={styles.extract}>
-            <div>
-              <img
-                src={this.props.wiki?.thumbnail.source}
-                alt={this.props.wiki?.displaytitle}
-              />
-            </div>
-            <div
-              className={styles.wiki}
-              dangerouslySetInnerHTML={{
-                __html: this.props.wiki?.extract_html as string,
-              }}
-            ></div>
-          </div>
+          <h2>{this.props.region}</h2>
         </div>
         <div className={styles.modes}>
           <div className={styles.mode}>

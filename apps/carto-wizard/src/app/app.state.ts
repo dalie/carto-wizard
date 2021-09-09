@@ -19,7 +19,7 @@ export interface AppState {
   showLevel?: boolean;
   showLevelSelect?: boolean;
   showRegions?: boolean;
-  wiki?: WikiResponse;
+  selectedRegion?: string;
 }
 
 export const states: { [key: string]: AppState } = {
