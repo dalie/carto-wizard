@@ -6,14 +6,16 @@ import './level-end.module.scss';
 export interface LevelEndProps {
   features?: {
     feature: MapboxGeoJSONFeature;
-    correct: boolean;
+    score: number;
   }[];
 }
 
 export class LevelEnd extends Component<LevelEndProps> {
   render() {
     const totalCountries = this.props.features?.length;
-    const correctGuesses = this.props.features?.filter((f) => f.correct).length;
+    const correctGuesses = this.props.features?.filter(
+      (f) => f.score === 1
+    ).length;
 
     return (
       <div>

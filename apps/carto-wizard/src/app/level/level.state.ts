@@ -5,7 +5,7 @@ export interface LevelState {
   currentFeature?: MapboxGeoJSONFeature;
   currentGuess?: MapboxGeoJSONFeature;
   currentChoices?: MapboxGeoJSONFeature[];
-  guessedFeatures?: { feature: MapboxGeoJSONFeature; correct: boolean }[];
+  guessedFeatures?: { feature: MapboxGeoJSONFeature; score: number }[];
   showCurrentFeature?: boolean;
   showCurrentChoices?: boolean;
   showStart?: boolean;

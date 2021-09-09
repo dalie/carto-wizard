@@ -19,10 +19,14 @@ export class CurrentFeature extends Component<CurrentFeatureProps> {
     return (
       <div className={`${this.props.className} ${styles.currentFeature}`}>
         <img
-          className={styles.flag}
+          className={`${styles.flag} ${
+            this.props.hideName ? styles.large : ''
+          }`}
           src={`assets/flags/${flagCode}.png`}
-          title={this.props.feature.properties?.name}
-          alt={this.props.feature.properties?.name}
+          title={
+            this.props.hideName ? '??' : this.props.feature.properties?.name
+          }
+          alt={this.props.hideName ? '??' : this.props.feature.properties?.name}
         />
         {!this.props.hideName && (
           <>

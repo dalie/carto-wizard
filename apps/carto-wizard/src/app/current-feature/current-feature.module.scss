@@ -17,6 +17,10 @@
   img.flag {
     height: 1em;
     box-shadow: 0 0 5px black;
+
+    &.large {
+      height: 2.5em;
+    }
   }
 
   img.wiki {

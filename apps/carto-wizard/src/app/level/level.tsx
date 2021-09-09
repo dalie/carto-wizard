@@ -107,15 +107,15 @@ export class Level extends Component<LevelProps, LevelState> {
     if (
       !this.isLocate() &&
       this.state.showCurrentChoices &&
-      this.state.currentFeature?.properties &&
-      this.state.currentChoices
+      this.state.currentFeature?.properties
     ) {
       currentChoices = (
         <CurrentChoices
           className={styles.currentFeature}
-          choices={this.state.currentChoices}
+          answer={this.state.currentFeature}
+          choices={this.state.features}
           hideName={this.props.type === LevelType.IdentifyFlag}
-          onSelectedChoice={this.onSelectedChoice}
+          onSuccess={this.onSuccess}
         ></CurrentChoices>
       );
     }
@@ -164,47 +164,16 @@ export class Level extends Component<LevelProps, LevelState> {
     );
   }
 
-  private getChoices(answer: MapboxGeoJSONFeature): MapboxGeoJSONFeature[] {
-    if (this.props.features) {
-      return [
-        answer,
-        ...this.props.features
-          .filter((f) => f.id !== answer.id)
-          .map((a) => ({ sort: Math.random(), value: a }))
-          .sort((a, b) => a.sort - b.sort)
-          .map((a) => a.value)
-          .slice(0, 3),
-      ]
-        .map((a) => ({ sort: Math.random(), value: a }))
-        .sort((a, b) => a.sort - b.sort)
-        .map((a) => a.value);
-    } else {
-      return [];
-    }
-  }
-
-  private onSelectedChoice = (id: string) => {
-    let correct = false;
-    if (this.state.currentFeature?.id === id) {
-      //correct
-      correct = true;
-      this.setFeatureState([this.state.currentFeature.id], {
-        hover: false,
-        guessed: true,
-        correct: true,
-      });
-    } else {
-      //wrong
-      this.setFeatureState([this.state.currentFeature?.id], {
-        hover: false,
-        guessed: true,
-        wrong: true,
-      });
-    }
+  private onSuccess = (score: number) => {
+    this.setFeatureState([this.state.currentFeature?.id], {
+      hover: false,
+      guessed: true,
+      correct: true,
+    });
 
     const guessed = this.state.guessedFeatures ?? [];
     guessed?.push({
-      correct,
+      score,
       feature: this.state.currentFeature as MapboxGeoJSONFeature,
     });
 
@@ -221,8 +190,9 @@ export class Level extends Component<LevelProps, LevelState> {
       this.setState({
         features,
         currentFeature: features[0],
-        currentChoices: this.getChoices(features[0]),
       });
+
+      //Zoom to feature
 
       this.setFeatureState([features[0].id], {
         hover: true,
@@ -254,9 +224,7 @@ export class Level extends Component<LevelProps, LevelState> {
     });
 
     if (!this.isLocate()) {
-      this.setState({
-        currentChoices: this.getChoices(this.state.features[0]),
-      });
+      //Zoom to feature
       this.setFeatureState([this.state.features[0].id], {
         hover: true,
       });
@@ -271,7 +239,7 @@ export class Level extends Component<LevelProps, LevelState> {
       e.features.length > 0 &&
       !e.features[0].state.guessed
     ) {
-      let correct = false;
+      let correct = 0;
 
       if (this.state.currentFeature.id === e.features[0].id) {
         this.setFeatureState([this.state.currentFeature.id], {
@@ -281,7 +249,7 @@ export class Level extends Component<LevelProps, LevelState> {
         });
 
         this._hoveredStateIds = [];
-        correct = true;
+        correct = 1;
       } else {
         this.setFeatureState([this.state.currentFeature.id], {
           hover: false,
@@ -292,7 +260,7 @@ export class Level extends Component<LevelProps, LevelState> {
 
       const guessed = this.state.guessedFeatures ?? [];
       guessed?.push({
-        correct,
+        score: correct,
         feature: this.state.currentFeature,
       });
 
