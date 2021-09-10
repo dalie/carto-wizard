@@ -12,21 +12,23 @@ import Sources from './sources/sources';
 
 import axios from 'axios';
 
+export interface JsonCountry {
+  iso2: string;
+  iso3: string;
+  parentIso2?: string;
+  noFlag?: boolean;
+  name: string;
+  nativeName: string;
+  latlng: [number, number];
+  capital: string;
+  population: number;
+  area: number;
+  region: string;
+  subregion?: string;
+}
 export class App extends Component<unknown, AppState | undefined> {
-  private _jsonCountries: {
-    iso2: string;
-    iso3: string;
-    parentIso2?: string;
-    noFlag?: boolean;
-    name: string;
-    nativeName: string;
-    latlng: [number, number];
-    capital: string;
-    population: number;
-    area: number;
-    region: string;
-    subregion?: string;
-  }[] = [];
+  private _hoveredRegion = '';
+  private _jsonCountries: JsonCountry[] = [];
 
   private _mapInstance: mapboxgl.Map | undefined = undefined;
   private _hoveredStateIds: (number | string | undefined)[] = [];
@@ -234,12 +236,25 @@ export class App extends Component<unknown, AppState | undefined> {
     });
 
     this.setState(states['level']);
+    if (type === LevelType.IdentifyFlag || type === LevelType.LocateFlag) {
+      const uniqueFlagCodes = this._jsonCountries
+        .filter((c) => !c.parentIso2)
+        .map((c) => c.iso2);
+
+      this.setState({
+        features: this.state.features?.filter((f) =>
+          uniqueFlagCodes.indexOf(f.properties?.iso_3166_1)
+        ),
+      });
+    }
   };
 
   private onRegionMouseMove = (e: MapLayerMouseEvent) => {
     if (this._mapInstance && e.features) {
       this._mapInstance.getCanvas().style.cursor = 'pointer';
-      if (e.features.length > 0) {
+      if (e.features.length > 0 && e.features[0].id !== this._hoveredRegion) {
+        this._hoveredRegion = e.features[0].id as string;
+
         if (this._hoveredStateIds.length) {
           this.setFeatureState(this._hoveredStateIds, { hover: false });
         }
@@ -257,8 +272,8 @@ export class App extends Component<unknown, AppState | undefined> {
           this._hoveredStateIds = this._mapInstance
             ?.queryRenderedFeatures(undefined, {
               layers: ['countries_fill'],
+              filter: ['in', 'iso_3166_1', ...countries],
             })
-            .filter((f) => countries.indexOf(f.properties?.iso_3166_1) > -1)
             .map((f) => f.id);
 
           this.setFeatureState(this._hoveredStateIds, { hover: true });
@@ -268,6 +283,7 @@ export class App extends Component<unknown, AppState | undefined> {
   };
 
   private onRegionMouseLeave = (e: MapLayerMouseEvent) => {
+    this._hoveredRegion = '';
     if (this._mapInstance) {
       this._mapInstance.getCanvas().style.cursor = '';
       if (this._hoveredStateIds.length) {
@@ -281,18 +297,20 @@ export class App extends Component<unknown, AppState | undefined> {
   private onRegionMouseClick = (e: MapLayerMouseEvent) => {
     if (this._mapInstance && e.features) {
       if (e.features.length > 0) {
-        const region: string = e.features[0].properties?.name;
+        const regionFeature = e.features[0];
+        const countries = this._jsonCountries
+          .filter((c) =>
+            regionFeature.properties?.isRegion
+              ? c.region === regionFeature.properties?.name
+              : c.subregion === regionFeature.properties?.name
+          )
+          .map((c) => c.iso2);
 
         const features = this._mapInstance
           .querySourceFeatures('countries_source', {
-            sourceLayer: 'countries',
+            sourceLayer: 'country_boundaries',
+            filter: ['in', 'iso_3166_1', ...countries],
           })
-          .filter(
-            (f) =>
-              (f.properties?.area as string)
-                .toLowerCase()
-                .indexOf(region.toLowerCase()) >= 0
-          )
           .filter(
             (feature, index, self) =>
               index === self.findIndex((f) => f.id === feature.id)
@@ -301,7 +319,7 @@ export class App extends Component<unknown, AppState | undefined> {
         this.setState({
           features,
           backState: 'regions',
-          selectedRegion: region,
+          selectedRegion: regionFeature.properties?.name,
         });
 
         this.setState(states['levelSelect']);

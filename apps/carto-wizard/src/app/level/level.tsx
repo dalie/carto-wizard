@@ -1,4 +1,5 @@
 import bbox from '@turf/bbox';
+import axios from 'axios';
 import {
   LngLatBounds,
   Map,
@@ -7,6 +8,7 @@ import {
 } from 'mapbox-gl';
 import { Component } from 'react';
 import { Marker } from 'react-mapbox-gl';
+import { JsonCountry } from '../app';
 import appStyles from '../app.module.scss';
 import CurrentChoices from '../current-choices/current-choices';
 import CurrentFeature from '../current-feature/current-feature';
@@ -24,6 +26,7 @@ export interface LevelProps {
 }
 
 export class Level extends Component<LevelProps, LevelState> {
+  private _jsonCountries: { [key: string]: JsonCountry } = [] as any;
   private _hoveredStateIds: (number | string | undefined)[] = [];
   private _registeredListeners = false;
 
@@ -42,10 +45,21 @@ export class Level extends Component<LevelProps, LevelState> {
       showStart: true,
     };
   }
+
+  componentDidMount() {
+    axios
+      .get<JsonCountry[]>('assets/geojson/countries.json')
+      .then((response) => {
+        response.data.forEach((c) => {
+          this._jsonCountries[c.iso2] = c;
+        });
+      });
+  }
+
   componentWillUnmount() {
     this.props?.map?.removeFeatureState({
       source: 'countries_source',
-      sourceLayer: 'countries',
+      sourceLayer: 'country_boundaries',
     });
 
     if (this._registeredListeners && this.props?.map) {
@@ -65,8 +79,12 @@ export class Level extends Component<LevelProps, LevelState> {
         this.props.map.on('mousemove', 'countries_fill', this.onMouseMove);
         this.props.map.on('mouseleave', 'countries_fill', this.onMouseLeave);
         this.props.map.on('click', 'countries_fill', this.onMouseClick);
-        const codes = this.state.features.map((f) => f.properties?.code);
-        this.props.map.setFilter('countries_fill', ['in', 'code', ...codes]);
+        const codes = this.state.features.map((f) => f.properties?.iso_3166_1);
+        this.props.map.setFilter('countries_fill', [
+          'in',
+          'iso_3166_1',
+          ...codes,
+        ]);
       }
 
       const allBounds = new LngLatBounds();
@@ -107,13 +125,16 @@ export class Level extends Component<LevelProps, LevelState> {
     if (
       !this.isLocate() &&
       this.state.showCurrentChoices &&
-      this.state.currentFeature?.properties
+      this.state.currentFeature?.feature.properties
     ) {
       currentChoices = (
         <CurrentChoices
           className={styles.currentFeature}
           answer={this.state.currentFeature}
-          choices={this.state.features}
+          choices={{
+            features: this.state.features,
+            jsonCountries: this._jsonCountries,
+          }}
           hideName={this.props.type === LevelType.IdentifyFlag}
           onSuccess={this.onSuccess}
         ></CurrentChoices>
@@ -124,7 +145,7 @@ export class Level extends Component<LevelProps, LevelState> {
     if (
       this.isLocate() &&
       this.state.showCurrentFeature &&
-      this.state.currentFeature?.properties
+      this.state.currentFeature?.feature.properties
     ) {
       currentFeature = (
         <CurrentFeature
@@ -142,19 +163,16 @@ export class Level extends Component<LevelProps, LevelState> {
         {currentFeature}
         {currentChoices}
         {this.state.guessedFeatures?.map((f) => {
-          let flagCode = f.feature.properties?.code;
-          if (!flagCode) {
-            flagCode = f.feature.properties?.parentCode;
-          }
-
-          const coords = f.feature.properties?.capital_location.split(',');
+          const country = this._jsonCountries[f.feature.properties?.iso_3166_1];
+          const flagCode = country.parentIso2 ?? country.iso2;
+          const coords = country.latlng;
 
           return (
             <Marker key={f.feature.id} coordinates={[coords[1], coords[0]]}>
               <div className={styles.marker}>
                 <img
                   alt={f.feature.properties?.name}
-                  src={`assets/flags/${flagCode}.png`}
+                  src={`assets/flags/${flagCode.toLocaleLowerCase()}.png`}
                 />
               </div>
             </Marker>
@@ -165,7 +183,7 @@ export class Level extends Component<LevelProps, LevelState> {
   }
 
   private onSuccess = (score: number) => {
-    this.setFeatureState([this.state.currentFeature?.id], {
+    this.setFeatureState([this.state.currentFeature?.feature.id], {
       hover: false,
       guessed: true,
       correct: true,
@@ -174,22 +192,26 @@ export class Level extends Component<LevelProps, LevelState> {
     const guessed = this.state.guessedFeatures ?? [];
     guessed?.push({
       score,
-      feature: this.state.currentFeature as MapboxGeoJSONFeature,
+      feature: this.state.currentFeature?.feature as MapboxGeoJSONFeature,
     });
 
     this.setState({
       guessedFeatures: guessed,
     });
 
-    const currentCode = this.state.currentFeature?.properties?.code;
+    const currentCode =
+      this.state.currentFeature?.feature.properties?.iso_3166_1;
     const features = this.state.features.filter(
-      (f) => f.properties?.code !== currentCode
+      (f) => f.properties?.iso_3166_1 !== currentCode
     );
 
     if (features.length > 0) {
       this.setState({
         features,
-        currentFeature: features[0],
+        currentFeature: {
+          feature: features[0],
+          jsonCountry: this._jsonCountries[features[0].properties?.iso_3166_1],
+        },
       });
 
       //Zoom to feature
@@ -217,7 +239,11 @@ export class Level extends Component<LevelProps, LevelState> {
 
   private onStart = () => {
     this.setState({
-      currentFeature: this.state.features[0],
+      currentFeature: {
+        feature: this.state.features[0],
+        jsonCountry:
+          this._jsonCountries[this.state.features[0].properties?.iso_3166_1],
+      },
       showStart: false,
       showCurrentFeature: this.isLocate(),
       showCurrentChoices: !this.isLocate(),
@@ -241,8 +267,8 @@ export class Level extends Component<LevelProps, LevelState> {
     ) {
       let correct = 0;
 
-      if (this.state.currentFeature.id === e.features[0].id) {
-        this.setFeatureState([this.state.currentFeature.id], {
+      if (this.state.currentFeature.feature.id === e.features[0].id) {
+        this.setFeatureState([this.state.currentFeature.feature.id], {
           hover: false,
           guessed: true,
           correct: true,
@@ -251,7 +277,7 @@ export class Level extends Component<LevelProps, LevelState> {
         this._hoveredStateIds = [];
         correct = 1;
       } else {
-        this.setFeatureState([this.state.currentFeature.id], {
+        this.setFeatureState([this.state.currentFeature.feature.id], {
           hover: false,
           guessed: true,
           wrong: true,
@@ -261,22 +287,27 @@ export class Level extends Component<LevelProps, LevelState> {
       const guessed = this.state.guessedFeatures ?? [];
       guessed?.push({
         score: correct,
-        feature: this.state.currentFeature,
+        feature: this.state.currentFeature.feature,
       });
 
       this.setState({
         guessedFeatures: guessed,
       });
 
-      const currentCode = this.state.currentFeature.properties?.code;
+      const currentCode =
+        this.state.currentFeature.feature.properties?.iso_3166_1;
       const features = this.state.features.filter(
-        (f) => f.properties?.code !== currentCode
+        (f) => f.properties?.iso_3166_1 !== currentCode
       );
 
       if (features.length > 0) {
         this.setState({
           features,
-          currentFeature: features[0],
+          currentFeature: {
+            feature: features[0],
+            jsonCountry:
+              this._jsonCountries[features[0].properties?.iso_3166_1],
+          },
         });
       } else {
         //finished
@@ -324,7 +355,7 @@ export class Level extends Component<LevelProps, LevelState> {
         {
           id,
           source: 'countries_source',
-          sourceLayer: 'countries',
+          sourceLayer: 'country_boundaries',
         },
         properties
       );

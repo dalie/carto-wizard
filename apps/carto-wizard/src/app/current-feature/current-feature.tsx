@@ -1,42 +1,39 @@
 import { MapboxGeoJSONFeature } from 'mapbox-gl';
 import { Component } from 'react';
+import { JsonCountry } from '../app';
 import styles from './current-feature.module.scss';
 
 /* eslint-disable-next-line */
 export interface CurrentFeatureProps {
   className?: string;
-  feature: MapboxGeoJSONFeature;
+  feature: { feature: MapboxGeoJSONFeature; jsonCountry: JsonCountry };
   hideName?: boolean;
 }
 
 export class CurrentFeature extends Component<CurrentFeatureProps> {
   render() {
-    let flagCode = this.props.feature.properties?.code;
-    if (!flagCode) {
-      flagCode = this.props.feature.properties?.parentCode;
-    }
+    const flagCode =
+      this.props.feature.jsonCountry.parentIso2 ??
+      this.props.feature.jsonCountry.iso2;
 
+    const country = this.props.feature.jsonCountry;
     return (
       <div className={`${this.props.className} ${styles.currentFeature}`}>
         <img
           className={`${styles.flag} ${
             this.props.hideName ? styles.large : ''
           }`}
-          src={`assets/flags/${flagCode}.png`}
-          title={
-            this.props.hideName ? '??' : this.props.feature.properties?.name
-          }
-          alt={this.props.hideName ? '??' : this.props.feature.properties?.name}
+          src={`assets/flags/${flagCode.toLowerCase()}.png`}
+          title={this.props.hideName ? '??' : country.name}
+          alt={this.props.hideName ? '??' : country.name}
         />
         {!this.props.hideName && (
           <>
-            <span className={styles.name}>
-              {this.props.feature.properties?.name}
-            </span>
+            <span className={styles.name}>{country.name}</span>
             <a
               rel="noreferrer"
               target="_blank"
-              href={`https://en.wikipedia.org/wiki/${this.props.feature.properties?.wikiLink}`}
+              href={`https://en.wikipedia.org/wiki/${this.props.feature.feature.properties?.wikidata_id}`}
             >
               <img
                 className={styles.wiki}
