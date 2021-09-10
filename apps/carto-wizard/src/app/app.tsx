@@ -208,8 +208,12 @@ export class App extends Component<unknown, AppState | undefined> {
   };
 
   private onHomeSelectWorld = () => {
+    const countries = this._jsonCountries
+      .filter((c) => !!c.region)
+      .map((c) => c.iso2);
     const features = this._mapInstance?.queryRenderedFeatures(undefined, {
       layers: ['countries_fill'],
+      filter: ['in', 'iso_3166_1', ...countries],
     });
 
     const req = new XMLHttpRequest();

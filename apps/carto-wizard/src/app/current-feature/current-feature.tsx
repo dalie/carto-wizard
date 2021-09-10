@@ -12,11 +12,10 @@ export interface CurrentFeatureProps {
 
 export class CurrentFeature extends Component<CurrentFeatureProps> {
   render() {
-    const flagCode =
-      this.props.feature.jsonCountry.parentIso2 ??
-      this.props.feature.jsonCountry.iso2;
-
     const country = this.props.feature.jsonCountry;
+    console.log(country);
+    const flagCode = country.parentIso2 ?? country.iso2;
+
     return (
       <div className={`${this.props.className} ${styles.currentFeature}`}>
         <img

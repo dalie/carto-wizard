@@ -301,13 +301,13 @@ export class Level extends Component<LevelProps, LevelState> {
       );
 
       if (features.length > 0) {
+        const newFeature = {
+          feature: features[0],
+          jsonCountry: this._jsonCountries[features[0].properties?.iso_3166_1],
+        };
         this.setState({
           features,
-          currentFeature: {
-            feature: features[0],
-            jsonCountry:
-              this._jsonCountries[features[0].properties?.iso_3166_1],
-          },
+          currentFeature: newFeature,
         });
       } else {
         //finished
