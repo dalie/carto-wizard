@@ -10,7 +10,24 @@ import { LevelType } from './level-select/level-select.models';
 import { Level } from './level/level';
 import Sources from './sources/sources';
 
+import axios from 'axios';
+
 export class App extends Component<unknown, AppState | undefined> {
+  private _jsonCountries: {
+    iso2: string;
+    iso3: string;
+    parentIso2?: string;
+    noFlag?: boolean;
+    name: string;
+    nativeName: string;
+    latlng: [number, number];
+    capital: string;
+    population: number;
+    area: number;
+    region: string;
+    subregion?: string;
+  }[] = [];
+
   private _mapInstance: mapboxgl.Map | undefined = undefined;
   private _hoveredStateIds: (number | string | undefined)[] = [];
   private _mapComponent = ReactMapboxGl({
@@ -29,6 +46,13 @@ export class App extends Component<unknown, AppState | undefined> {
     super(props);
     this.state = states['home'];
   }
+
+  componentDidMount() {
+    axios.get('assets/geojson/countries.json').then((response) => {
+      this._jsonCountries = response.data;
+    });
+  }
+
   render() {
     let level;
     let levelSelect;
@@ -106,7 +130,7 @@ export class App extends Component<unknown, AppState | undefined> {
             type="line"
             id="countries_outline"
             sourceId="countries_source"
-            sourceLayer="countries"
+            sourceLayer="country_boundaries"
             paint={{
               'line-opacity': 1,
               'line-color': '#2a3d45',
@@ -117,7 +141,7 @@ export class App extends Component<unknown, AppState | undefined> {
             type="fill"
             id="countries_fill"
             sourceId="countries_source"
-            sourceLayer="countries"
+            sourceLayer="country_boundaries"
             paint={{
               'fill-color': '#000000',
               'fill-opacity': [
@@ -132,7 +156,7 @@ export class App extends Component<unknown, AppState | undefined> {
             type="fill"
             id="countries_fill_guess"
             sourceId="countries_source"
-            sourceLayer="countries"
+            sourceLayer="country_boundaries"
             paint={{
               'fill-color': [
                 'case',
@@ -152,7 +176,7 @@ export class App extends Component<unknown, AppState | undefined> {
             type="fill"
             id="countries_fill_disabled"
             sourceId="countries_source"
-            sourceLayer="countries"
+            sourceLayer="country_boundaries"
             paint={{
               'fill-color': '#ffffff',
               'fill-opacity': [
@@ -219,22 +243,26 @@ export class App extends Component<unknown, AppState | undefined> {
         if (this._hoveredStateIds.length) {
           this.setFeatureState(this._hoveredStateIds, { hover: false });
         }
+        const regionFeature = e.features[0];
+        if (regionFeature) {
+          const region: string = regionFeature.properties?.name;
 
-        const region: string = e.features[0].properties?.name;
+          const countries = this._jsonCountries
+            .filter((c) =>
+              regionFeature.properties?.isRegion
+                ? c.region === region
+                : c.subregion === region
+            )
+            .map((c) => c.iso2);
+          this._hoveredStateIds = this._mapInstance
+            ?.queryRenderedFeatures(undefined, {
+              layers: ['countries_fill'],
+            })
+            .filter((f) => countries.indexOf(f.properties?.iso_3166_1) > -1)
+            .map((f) => f.id);
 
-        this._hoveredStateIds = this._mapInstance
-          ?.queryRenderedFeatures(undefined, {
-            layers: ['countries_fill'],
-          })
-          .filter(
-            (f) =>
-              (f.properties?.area as string)
-                .toLowerCase()
-                .indexOf(region.toLowerCase()) >= 0
-          )
-          .map((f) => f.id);
-
-        this.setFeatureState(this._hoveredStateIds, { hover: true });
+          this.setFeatureState(this._hoveredStateIds, { hover: true });
+        }
       }
     }
   };
@@ -292,7 +320,7 @@ export class App extends Component<unknown, AppState | undefined> {
         {
           id,
           source: 'countries_source',
-          sourceLayer: 'countries',
+          sourceLayer: 'country_boundaries',
         },
         properties
       );

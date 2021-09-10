@@ -13,7 +13,7 @@ export class Sources extends Component<SourcesProps> {
           id="countries_source"
           tileJsonSource={{
             type: 'vector',
-            url: 'mapbox://dominicalie.384dv6oo',
+            url: 'mapbox://mapbox.country-boundaries-v1',
           }}
         ></Source>
         <Source
@@ -33,7 +33,7 @@ export class Sources extends Component<SourcesProps> {
                   },
                   properties: {
                     label: 'North America',
-                    name: 'North America',
+                    name: 'Northern America',
                     wikiLink: 'North_America',
                   },
                 },
@@ -45,8 +45,9 @@ export class Sources extends Component<SourcesProps> {
                     coordinates: [-100, 20],
                   },
                   properties: {
+                    isRegion: true,
                     label: 'Americas',
-                    name: 'America',
+                    name: 'Americas',
                     wikiLink: 'Americas',
                   },
                 },
@@ -82,6 +83,7 @@ export class Sources extends Component<SourcesProps> {
                     coordinates: [0, 50],
                   },
                   properties: {
+                    isRegion: true,
                     label: 'Europe',
                     name: 'Europe',
                     wikiLink: 'Europe',
@@ -106,6 +108,7 @@ export class Sources extends Component<SourcesProps> {
                     coordinates: [20, 20],
                   },
                   properties: {
+                    isRegion: true,
                     label: 'Africa',
                     name: 'Africa',
                     wikiLink: 'Africa',
@@ -130,9 +133,23 @@ export class Sources extends Component<SourcesProps> {
                     coordinates: [100, 50],
                   },
                   properties: {
+                    isRegion: true,
                     label: 'Asia',
                     name: 'Asia',
                     wikiLink: 'Asia',
+                  },
+                },
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [70, -10],
+                  },
+                  properties: {
+                    isRegion: true,
+                    label: 'Indian Ocean',
+                    name: 'Indian Ocean',
+                    wikiLink: 'Indian_Ocean',
                   },
                 },
                 {
@@ -143,7 +160,7 @@ export class Sources extends Component<SourcesProps> {
                   },
                   properties: {
                     label: 'Southeast Asia',
-                    name: 'Southeast Asia',
+                    name: 'South-Eastern Asia',
                     wikiLink: 'Southeast_Asia',
                   },
                 },
@@ -154,6 +171,7 @@ export class Sources extends Component<SourcesProps> {
                     coordinates: [145, -20],
                   },
                   properties: {
+                    isRegion: true,
                     label: 'Oceania',
                     name: 'Oceania',
                     wikiLink: 'Oceania',
