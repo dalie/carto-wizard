@@ -28,7 +28,10 @@
   flex-wrap: wrap;
   .mode {
     width: 350px;
-    margin: 50px;
+    margin: 50px auto;
+    @media screen and (max-height: 500px) {
+      margin: 10px auto;
+    }
     > div {
       padding: 1em;
       background-color: white;
