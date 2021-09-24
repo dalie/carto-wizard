@@ -2,7 +2,7 @@ import { MapLayerMouseEvent } from 'mapbox-gl';
 import { Component } from 'react';
 import ReactMapboxGl, { Layer, ZoomControl } from 'react-mapbox-gl';
 import './app.module.scss';
-import { AppState, states } from './app.state';
+import { AppState, PropertiesJson, states } from './app.state';
 import BackButton from './back-button/back-button';
 import Home from './home/home';
 import LevelSelect from './level-select/level-select';
@@ -28,7 +28,6 @@ export interface JsonCountry {
 }
 export class App extends Component<unknown, AppState | undefined> {
   private _hoveredRegion = '';
-  private _jsonCountries: JsonCountry[] = [];
 
   private _mapInstance: mapboxgl.Map | undefined = undefined;
   private _hoveredStateIds: (number | string | undefined)[] = [];
@@ -47,12 +46,6 @@ export class App extends Component<unknown, AppState | undefined> {
   constructor(props = {}) {
     super(props);
     this.state = states['home'];
-  }
-
-  componentDidMount() {
-    axios.get('assets/geojson/countries.json').then((response) => {
-      this._jsonCountries = response.data;
-    });
   }
 
   render() {
@@ -117,7 +110,7 @@ export class App extends Component<unknown, AppState | undefined> {
           center={[20, 20]}
           zoom={[2]}
           // eslint-disable-next-line react/style-prop-object
-          style="mapbox://styles/dominicalie/ckqzmhgmw3h9717uo5z4zvuiz"
+          style="mapbox://styles/dominicalie/cktkdp5ye4yre17pb7tiy8yvs"
           containerStyle={{
             height: '100vh',
             width: '100vw',
@@ -132,7 +125,7 @@ export class App extends Component<unknown, AppState | undefined> {
             type="line"
             id="countries_outline"
             sourceId="countries_source"
-            sourceLayer="country_boundaries"
+            sourceLayer="processed"
             paint={{
               'line-opacity': 1,
               'line-color': '#2a3d45',
@@ -143,7 +136,7 @@ export class App extends Component<unknown, AppState | undefined> {
             type="fill"
             id="countries_fill"
             sourceId="countries_source"
-            sourceLayer="country_boundaries"
+            sourceLayer="processed"
             paint={{
               'fill-color': '#000000',
               'fill-opacity': [
@@ -158,7 +151,7 @@ export class App extends Component<unknown, AppState | undefined> {
             type="fill"
             id="countries_fill_guess"
             sourceId="countries_source"
-            sourceLayer="country_boundaries"
+            sourceLayer="processed"
             paint={{
               'fill-color': [
                 'case',
@@ -178,7 +171,7 @@ export class App extends Component<unknown, AppState | undefined> {
             type="fill"
             id="countries_fill_disabled"
             sourceId="countries_source"
-            sourceLayer="country_boundaries"
+            sourceLayer="processed"
             paint={{
               'fill-color': '#ffffff',
               'fill-opacity': [
@@ -208,12 +201,8 @@ export class App extends Component<unknown, AppState | undefined> {
   };
 
   private onHomeSelectWorld = () => {
-    const countries = this._jsonCountries
-      .filter((c) => !!c.region)
-      .map((c) => c.iso2);
     const features = this._mapInstance?.queryRenderedFeatures(undefined, {
       layers: ['countries_fill'],
-      filter: ['in', 'iso_3166_1', ...countries],
     });
 
     const req = new XMLHttpRequest();
@@ -241,13 +230,9 @@ export class App extends Component<unknown, AppState | undefined> {
 
     this.setState(states['level']);
     if (type === LevelType.IdentifyFlag || type === LevelType.LocateFlag) {
-      const uniqueFlagCodes = this._jsonCountries
-        .filter((c) => !c.parentIso2)
-        .map((c) => c.iso2);
-
       this.setState({
-        features: this.state.features?.filter((f) =>
-          uniqueFlagCodes.indexOf(f.properties?.iso_3166_1)
+        features: this.state.features?.filter(
+          (f) => !(f.properties as PropertiesJson).noFlag
         ),
       });
     }
@@ -262,21 +247,13 @@ export class App extends Component<unknown, AppState | undefined> {
         if (this._hoveredStateIds.length) {
           this.setFeatureState(this._hoveredStateIds, { hover: false });
         }
-        const regionFeature = e.features[0];
-        if (regionFeature) {
-          const region: string = regionFeature.properties?.name;
+        const { isRegion, name } = e.features[0].properties as any;
 
-          const countries = this._jsonCountries
-            .filter((c) =>
-              regionFeature.properties?.isRegion
-                ? c.region === region
-                : c.subregion === region
-            )
-            .map((c) => c.iso2);
+        if (name) {
           this._hoveredStateIds = this._mapInstance
             ?.queryRenderedFeatures(undefined, {
               layers: ['countries_fill'],
-              filter: ['in', 'iso_3166_1', ...countries],
+              filter: ['==', isRegion ? 'region' : 'subregion', name],
             })
             .map((f) => f.id);
 
@@ -301,19 +278,16 @@ export class App extends Component<unknown, AppState | undefined> {
   private onRegionMouseClick = (e: MapLayerMouseEvent) => {
     if (this._mapInstance && e.features) {
       if (e.features.length > 0) {
-        const regionFeature = e.features[0];
-        const countries = this._jsonCountries
-          .filter((c) =>
-            regionFeature.properties?.isRegion
-              ? c.region === regionFeature.properties?.name
-              : c.subregion === regionFeature.properties?.name
-          )
-          .map((c) => c.iso2);
+        const { isRegion, name } = e.features[0].properties as any;
 
         const features = this._mapInstance
           .querySourceFeatures('countries_source', {
-            sourceLayer: 'country_boundaries',
-            filter: ['in', 'iso_3166_1', ...countries],
+            sourceLayer: 'processed',
+            filter: [
+              'all',
+              ['has', 'area'],
+              ['==', isRegion ? 'region' : 'subregion', name],
+            ],
           })
           .filter(
             (feature, index, self) =>
@@ -323,7 +297,7 @@ export class App extends Component<unknown, AppState | undefined> {
         this.setState({
           features,
           backState: 'regions',
-          selectedRegion: regionFeature.properties?.name,
+          selectedRegion: name,
         });
 
         this.setState(states['levelSelect']);
@@ -342,7 +316,7 @@ export class App extends Component<unknown, AppState | undefined> {
         {
           id,
           source: 'countries_source',
-          sourceLayer: 'country_boundaries',
+          sourceLayer: 'processed',
         },
         properties
       );

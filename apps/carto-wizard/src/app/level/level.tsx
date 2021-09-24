@@ -10,6 +10,7 @@ import { Component } from 'react';
 import { Marker } from 'react-mapbox-gl';
 import { JsonCountry } from '../app';
 import appStyles from '../app.module.scss';
+import { parseProps, Properties, PropertiesJson } from '../app.state';
 import CurrentChoices from '../current-choices/current-choices';
 import CurrentFeature from '../current-feature/current-feature';
 import LevelEnd from '../level-end/level-end';
@@ -26,7 +27,6 @@ export interface LevelProps {
 }
 
 export class Level extends Component<LevelProps, LevelState> {
-  private _jsonCountries: { [key: string]: JsonCountry } = [] as any;
   private _hoveredStateIds: (number | string | undefined)[] = [];
   private _registeredListeners = false;
 
@@ -46,20 +46,10 @@ export class Level extends Component<LevelProps, LevelState> {
     };
   }
 
-  componentDidMount() {
-    axios
-      .get<JsonCountry[]>('assets/geojson/countries.json')
-      .then((response) => {
-        response.data.forEach((c) => {
-          this._jsonCountries[c.iso2] = c;
-        });
-      });
-  }
-
   componentWillUnmount() {
     this.props?.map?.removeFeatureState({
       source: 'countries_source',
-      sourceLayer: 'country_boundaries',
+      sourceLayer: 'processed',
     });
 
     if (this._registeredListeners && this.props?.map) {
@@ -79,10 +69,12 @@ export class Level extends Component<LevelProps, LevelState> {
         this.props.map.on('mousemove', 'countries_fill', this.onMouseMove);
         this.props.map.on('mouseleave', 'countries_fill', this.onMouseLeave);
         this.props.map.on('click', 'countries_fill', this.onMouseClick);
-        const codes = this.state.features.map((f) => f.properties?.iso_3166_1);
+        const codes = this.state.features.map(
+          (f) => (f.properties as PropertiesJson)?.alpha2Code
+        );
         this.props.map.setFilter('countries_fill', [
           'in',
-          'iso_3166_1',
+          'alpha2Code',
           ...codes,
         ]);
       }
@@ -125,16 +117,13 @@ export class Level extends Component<LevelProps, LevelState> {
     if (
       !this.isLocate() &&
       this.state.showCurrentChoices &&
-      this.state.currentFeature?.feature.properties
+      this.state.currentFeature?.properties
     ) {
       currentChoices = (
         <CurrentChoices
           className={styles.currentFeature}
           answer={this.state.currentFeature}
-          choices={{
-            features: this.state.features,
-            jsonCountries: this._jsonCountries,
-          }}
+          choices={this.state.features}
           hideName={this.props.type === LevelType.IdentifyFlag}
           onSuccess={this.onSuccess}
         ></CurrentChoices>
@@ -145,7 +134,7 @@ export class Level extends Component<LevelProps, LevelState> {
     if (
       this.isLocate() &&
       this.state.showCurrentFeature &&
-      this.state.currentFeature?.feature.properties
+      this.state.currentFeature?.properties
     ) {
       currentFeature = (
         <CurrentFeature
@@ -163,16 +152,13 @@ export class Level extends Component<LevelProps, LevelState> {
         {currentFeature}
         {currentChoices}
         {this.state.guessedFeatures?.map((f) => {
-          const country = this._jsonCountries[f.feature.properties?.iso_3166_1];
-          const flagCode = country.parentIso2 ?? country.iso2;
-          const coords = country.latlng;
-
+          const props: Properties = parseProps(f.feature.properties as any);
           return (
-            <Marker key={f.feature.id} coordinates={[coords[1], coords[0]]}>
+            <Marker key={f.feature.id} coordinates={props.lngLat}>
               <div className={styles.marker}>
                 <img
-                  alt={f.feature.properties?.name}
-                  src={`assets/flags/${flagCode.toLocaleLowerCase()}.png`}
+                  alt={props.name}
+                  src={`assets/flags/${props.alpha2Code.toLocaleLowerCase()}.png`}
                 />
               </div>
             </Marker>
@@ -183,50 +169,50 @@ export class Level extends Component<LevelProps, LevelState> {
   }
 
   private onSuccess = (score: number) => {
-    this.setFeatureState([this.state.currentFeature?.feature.id], {
-      hover: false,
-      guessed: true,
-      correct: true,
-    });
-
-    const guessed = this.state.guessedFeatures ?? [];
-    guessed?.push({
-      score,
-      feature: this.state.currentFeature?.feature as MapboxGeoJSONFeature,
-    });
-
-    this.setState({
-      guessedFeatures: guessed,
-    });
-
-    const currentCode =
-      this.state.currentFeature?.feature.properties?.iso_3166_1;
-    const features = this.state.features.filter(
-      (f) => f.properties?.iso_3166_1 !== currentCode
-    );
-
-    if (features.length > 0) {
-      this.setState({
-        features,
-        currentFeature: {
-          feature: features[0],
-          jsonCountry: this._jsonCountries[features[0].properties?.iso_3166_1],
-        },
+    if (this.state.currentFeature) {
+      this.setFeatureState([this.state.currentFeature.id], {
+        hover: false,
+        guessed: true,
+        correct: true,
       });
 
-      //Zoom to feature
-
-      this.setFeatureState([features[0].id], {
-        hover: true,
+      const guessed = this.state.guessedFeatures ?? [];
+      guessed.push({
+        score,
+        feature: this.state.currentFeature,
       });
-    } else {
-      //finished
 
       this.setState({
-        showCurrentChoices: false,
-        showStart: false,
-        showEnd: true,
+        guessedFeatures: guessed,
       });
+
+      const currentCode = (
+        this.state.currentFeature.properties as PropertiesJson
+      )?.alpha2Code;
+      const features = this.state.features.filter(
+        (f) => (f.properties as PropertiesJson)?.alpha2Code !== currentCode
+      );
+
+      if (features.length > 0) {
+        this.setState({
+          features,
+          currentFeature: features[0],
+        });
+
+        //Zoom to feature
+        this.zoomToCountry(features[0].properties as any);
+        this.setFeatureState([features[0].id], {
+          hover: true,
+        });
+      } else {
+        //finished
+
+        this.setState({
+          showCurrentChoices: false,
+          showStart: false,
+          showEnd: true,
+        });
+      }
     }
   };
 
@@ -239,11 +225,7 @@ export class Level extends Component<LevelProps, LevelState> {
 
   private onStart = () => {
     this.setState({
-      currentFeature: {
-        feature: this.state.features[0],
-        jsonCountry:
-          this._jsonCountries[this.state.features[0].properties?.iso_3166_1],
-      },
+      currentFeature: this.state.features[0],
       showStart: false,
       showCurrentFeature: this.isLocate(),
       showCurrentChoices: !this.isLocate(),
@@ -251,11 +233,53 @@ export class Level extends Component<LevelProps, LevelState> {
 
     if (!this.isLocate()) {
       //Zoom to feature
+      this.zoomToCountry(this.state.features[0].properties as any);
+
       this.setFeatureState([this.state.features[0].id], {
         hover: true,
       });
     }
   };
+
+  private zoomToCountry(propperties: PropertiesJson) {
+    const props = parseProps(propperties);
+    if (this.props.map) {
+      let zoom = 6;
+      if (props.area > 1150000) {
+        zoom = 5;
+      }
+      this.props.map.flyTo({
+        center: { lng: props.lngLat[0], lat: props.lngLat[1] },
+        zoom: this.getZoom(props.area),
+      });
+    }
+  }
+
+  private getZoom(area = 1000000): number {
+    const minZoom = 2.5;
+    const maxZoom = 7;
+    const minArea = 100000;
+    const maxArea = 1000000;
+
+    if (area > maxArea) {
+      return minZoom;
+    }
+
+    if (area < minArea) {
+      return maxZoom;
+    }
+
+    const areaRange = maxArea - minArea;
+    const zoomRange = maxZoom - minZoom;
+    const overMin = area - minArea;
+    const percent = overMin / areaRange;
+
+    const zoom = maxZoom - percent * zoomRange;
+    if (!zoom) {
+      console.log('fail');
+    }
+    return zoom;
+  }
 
   private onMouseClick = (e: MapLayerMouseEvent) => {
     if (
@@ -267,8 +291,8 @@ export class Level extends Component<LevelProps, LevelState> {
     ) {
       let correct = 0;
 
-      if (this.state.currentFeature.feature.id === e.features[0].id) {
-        this.setFeatureState([this.state.currentFeature.feature.id], {
+      if (this.state.currentFeature.id === e.features[0].id) {
+        this.setFeatureState([this.state.currentFeature.id], {
           hover: false,
           guessed: true,
           correct: true,
@@ -277,7 +301,7 @@ export class Level extends Component<LevelProps, LevelState> {
         this._hoveredStateIds = [];
         correct = 1;
       } else {
-        this.setFeatureState([this.state.currentFeature.feature.id], {
+        this.setFeatureState([this.state.currentFeature.id], {
           hover: false,
           guessed: true,
           wrong: true,
@@ -287,27 +311,24 @@ export class Level extends Component<LevelProps, LevelState> {
       const guessed = this.state.guessedFeatures ?? [];
       guessed?.push({
         score: correct,
-        feature: this.state.currentFeature.feature,
+        feature: this.state.currentFeature,
       });
 
       this.setState({
         guessedFeatures: guessed,
       });
 
-      const currentCode =
-        this.state.currentFeature.feature.properties?.iso_3166_1;
+      const currentCode = (
+        this.state.currentFeature.properties as PropertiesJson
+      )?.alpha2Code;
       const features = this.state.features.filter(
-        (f) => f.properties?.iso_3166_1 !== currentCode
+        (f) => (f.properties as PropertiesJson)?.alpha2Code !== currentCode
       );
 
       if (features.length > 0) {
-        const newFeature = {
-          feature: features[0],
-          jsonCountry: this._jsonCountries[features[0].properties?.iso_3166_1],
-        };
         this.setState({
           features,
-          currentFeature: newFeature,
+          currentFeature: features[0],
         });
       } else {
         //finished
@@ -355,7 +376,7 @@ export class Level extends Component<LevelProps, LevelState> {
         {
           id,
           source: 'countries_source',
-          sourceLayer: 'country_boundaries',
+          sourceLayer: 'processed',
         },
         properties
       );

@@ -1,20 +1,18 @@
 import { MapboxGeoJSONFeature } from 'mapbox-gl';
 import { Component } from 'react';
-import { JsonCountry } from '../app';
+import { PropertiesJson } from '../app.state';
 import styles from './current-feature.module.scss';
 
 /* eslint-disable-next-line */
 export interface CurrentFeatureProps {
   className?: string;
-  feature: { feature: MapboxGeoJSONFeature; jsonCountry: JsonCountry };
+  feature: MapboxGeoJSONFeature;
   hideName?: boolean;
 }
 
 export class CurrentFeature extends Component<CurrentFeatureProps> {
   render() {
-    const country = this.props.feature.jsonCountry;
-    console.log(country);
-    const flagCode = country.parentIso2 ?? country.iso2;
+    const props: PropertiesJson = this.props.feature.properties as any;
 
     return (
       <div className={`${this.props.className} ${styles.currentFeature}`}>
@@ -22,26 +20,12 @@ export class CurrentFeature extends Component<CurrentFeatureProps> {
           className={`${styles.flag} ${
             this.props.hideName ? styles.large : ''
           }`}
-          src={`assets/flags/${flagCode.toLowerCase()}.png`}
-          title={this.props.hideName ? '??' : country.name}
-          alt={this.props.hideName ? '??' : country.name}
+          src={`assets/flags/${props.alpha2Code.toLowerCase()}.png`}
+          title={this.props.hideName ? '??' : props.name}
+          alt={this.props.hideName ? '??' : props.name}
         />
         {!this.props.hideName && (
-          <>
-            <span className={styles.name}>{country.name}</span>
-            <a
-              rel="noreferrer"
-              target="_blank"
-              href={`https://en.wikipedia.org/wiki/${this.props.feature.feature.properties?.wikidata_id}`}
-            >
-              <img
-                className={styles.wiki}
-                alt={`Wikipedia`}
-                title={`Wikipedia`}
-                src={`assets/images/wikipedia_icon.png`}
-              />
-            </a>
-          </>
+          <span className={styles.name}>{props.name}</span>
         )}
       </div>
     );

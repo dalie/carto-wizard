@@ -13,7 +13,7 @@ export class Sources extends Component<SourcesProps> {
           id="countries_source"
           tileJsonSource={{
             type: 'vector',
-            url: 'mapbox://mapbox.country-boundaries-v1',
+            url: 'mapbox://dominicalie.6qx7hy0c',
           }}
         ></Source>
         <Source

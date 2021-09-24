@@ -1,25 +1,21 @@
 import { MapboxGeoJSONFeature } from 'mapbox-gl';
 import { Component } from 'react';
-import { JsonCountry } from '../app';
-
+import { PropertiesJson } from '../app.state';
 import styles from './current-choices.module.scss';
 
 /* eslint-disable-next-line */
 export interface CurrentChoicesProps {
   nChoices?: number;
   className: string;
-  answer: { feature: MapboxGeoJSONFeature; jsonCountry: JsonCountry };
-  choices: {
-    features: MapboxGeoJSONFeature[];
-    jsonCountries: { [key: string]: JsonCountry };
-  };
+  answer: MapboxGeoJSONFeature;
+  choices: MapboxGeoJSONFeature[];
   hideName: boolean;
   onSuccess: (score: number) => void;
 }
 
 export class CurrentChoices extends Component<CurrentChoicesProps> {
   state: {
-    answer: { feature: MapboxGeoJSONFeature; jsonCountry: JsonCountry };
+    answer: MapboxGeoJSONFeature;
     attempts: number;
     currentChoices: MapboxGeoJSONFeature[];
     nChoices: number;
@@ -40,7 +36,7 @@ export class CurrentChoices extends Component<CurrentChoicesProps> {
   }
 
   componentDidUpdate() {
-    if (this.props.answer.feature.id !== this.state.answer.feature.id) {
+    if (this.props.answer.id !== this.state.answer.id) {
       this.setState({
         answer: this.props.answer,
         currentChoices: this.getChoices(this.state.nChoices),
@@ -56,9 +52,7 @@ export class CurrentChoices extends Component<CurrentChoicesProps> {
         }`}
       >
         {this.state.currentChoices.map((c) => {
-          const country =
-            this.props.choices.jsonCountries[c.properties?.iso_3166_1];
-          const flagCode = country.iso2;
+          const props: PropertiesJson = c.properties as any;
 
           return (
             <div
@@ -76,12 +70,12 @@ export class CurrentChoices extends Component<CurrentChoicesProps> {
             >
               <div className={styles.flag}>
                 <img
-                  alt={this.props.hideName ? '' : country.name}
-                  src={`assets/flags/${flagCode.toLowerCase()}.png`}
+                  alt={this.props.hideName ? '' : props.name}
+                  src={`assets/flags/${props.alpha2Code.toLowerCase()}.png`}
                 />
               </div>
 
-              {!this.props.hideName && <span>{country.name}</span>}
+              {!this.props.hideName && <span>{props.name}</span>}
             </div>
           );
         })}
@@ -94,7 +88,7 @@ export class CurrentChoices extends Component<CurrentChoicesProps> {
   }
 
   private onClick = (id: string) => {
-    if (id === this.props.answer.feature.id) {
+    if (id === this.props.answer.id) {
       this.setState({
         showContinue: true,
       });
@@ -120,9 +114,9 @@ export class CurrentChoices extends Component<CurrentChoicesProps> {
   private getChoices(nChoices: number): MapboxGeoJSONFeature[] {
     if (this.props.choices) {
       return [
-        this.props.answer.feature,
-        ...this.props.choices.features
-          .filter((f) => f.id !== this.props.answer.feature.id)
+        this.props.answer,
+        ...this.props.choices
+          .filter((f) => f.id !== this.props.answer.id)
           .map((a) => ({ sort: Math.random(), value: a }))
           .sort((a, b) => a.sort - b.sort)
           .map((a) => a.value)
